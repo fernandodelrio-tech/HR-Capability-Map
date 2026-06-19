@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌸 Anime City Walk</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #0a0a1a; font-family: 'Segoe UI', sans-serif; }
+    canvas { display: block; }
+
+    #overlay {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg, #1a0533 0%, #0d1b4b 50%, #0a2a1a 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 100; transition: opacity 1.5s ease;
+    }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .title-wrap { text-align: center; margin-bottom: 40px; }
+    .title-main {
+      font-size: 56px; font-weight: 900; letter-spacing: 4px;
+      background: linear-gradient(135deg, #ff6eb4, #ffe66d, #6ee7ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: none; filter: drop-shadow(0 0 30px rgba(255,110,180,0.5));
+    }
+    .title-sub {
+      font-size: 18px; color: rgba(200,180,255,0.8); margin-top: 8px; letter-spacing: 6px;
+    }
+
+    #start-btn {
+      padding: 16px 48px; font-size: 20px; font-weight: 700; letter-spacing: 3px;
+      border: none; border-radius: 50px; cursor: pointer;
+      background: linear-gradient(135deg, #ff6eb4, #c44dff);
+      color: white; box-shadow: 0 0 40px rgba(255,110,180,0.6);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #start-btn:hover { transform: scale(1.06); box-shadow: 0 0 60px rgba(255,110,180,0.9); }
+
+    .petals-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .petal {
+      position: absolute; width: 10px; height: 10px; border-radius: 0 50% 50% 50%;
+      background: rgba(255, 180, 210, 0.6);
+      animation: floatPetal linear infinite;
+    }
+
+    @keyframes floatPetal {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(110vh) rotate(720deg) translateX(80px); opacity: 0; }
+    }
+
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    #hud-title {
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(90deg, #ff6eb4, #ffe66d);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(255,110,180,0.4));
+    }
+    #time-display {
+      font-size: 14px; color: rgba(255,255,255,0.7); text-align: right;
+      text-shadow: 0 0 10px rgba(100,200,255,0.5);
+    }
+
+    #controls-hint {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 24px; z-index: 10; pointer-events: none;
+      animation: fadeInUp 1s ease 2s both;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .hint-key {
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px; padding: 6px 12px; color: rgba(255,255,255,0.6);
+      font-size: 12px; backdrop-filter: blur(8px); letter-spacing: 1px;
+    }
+    .hint-key span { color: rgba(255,200,100,0.9); font-weight: 700; }
+
+    #weather-toggle {
+      position: fixed; top: 70px; right: 20px; z-index: 10;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .weather-btn {
+      padding: 8px 14px; font-size: 18px; border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px; background: rgba(0,0,0,0.4); cursor: pointer;
+      backdrop-filter: blur(8px); transition: all 0.2s;
+    }
+    .weather-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+    .weather-btn.active { background: rgba(255,200,100,0.3); border-color: rgba(255,200,100,0.6); }
+
+    #minimap {
+      position: fixed; bottom: 80px; right: 20px; z-index: 10;
+      width: 140px; height: 140px; border-radius: 50%;
+      border: 2px solid rgba(255,110,180,0.4);
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+      overflow: hidden;
+    }
+    #minimap canvas { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="overlay">
+  <div class="petals-bg" id="petals-bg"></div>
+  <div class="title-wrap">
+    <div class="title-main">🌸 ANIME CITY</div>
+    <div class="title-sub">— WALKING SIMULATOR —</div>
+  </div>
+  <button id="start-btn">ENTER THE CITY</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-title">🌸 Anime City</div>
+  <div id="time-display">
+    <div id="game-time">18:30</div>
+    <div id="weather-label">Clear Evening</div>
+  </div>
+</div>
+
+<!-- CONTROLS HINT -->
+<div id="controls-hint">
+  <div class="hint-key"><span>W A S D</span> Move</div>
+  <div class="hint-key"><span>Mouse</span> Look</div>
+  <div class="hint-key"><span>Scroll</span> Zoom</div>
+  <div class="hint-key"><span>Shift</span> Run</div>
+</div>
+
+<!-- WEATHER BUTTONS -->
+<div id="weather-toggle">
+  <button class="weather-btn active" data-weather="clear" title="Clear">☀️</button>
+  <button class="weather-btn" data-weather="rain" title="Rain">🌧️</button>
+  <button class="weather-btn" data-weather="sakura" title="Sakura">🌸</button>
+  <button class="weather-btn" data-weather="night" title="Night">🌙</button>
+</div>
+
+<!-- MINIMAP -->
+<div id="minimap">
+  <canvas id="minimap-canvas" width="140" height="140"></canvas>
+</div>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
