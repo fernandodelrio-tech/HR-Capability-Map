@@ -274,6 +274,13 @@ function buildRoads() {
   for (let z = -CITY_HALF; z <= CITY_HALF; z += BLOCK_SIZE) {
     addRoadSegment(0, 0, z, CITY_HALF * 2, false, roadMat, lineMat);
   }
+
+  // Crosswalks — once per intersection, not once per road segment
+  for (let cx = -CITY_HALF; cx <= CITY_HALF; cx += BLOCK_SIZE) {
+    for (let cz = -CITY_HALF; cz <= CITY_HALF; cz += BLOCK_SIZE) {
+      addCrosswalk(cx, cz, lineMat);
+    }
+  }
 }
 
 function addRoadSegment(x, y, z, length, isX, roadMat, lineMat) {
@@ -302,12 +309,6 @@ function addRoadSegment(x, y, z, length, isX, roadMat, lineMat) {
     scene.add(dash);
   }
 
-  // Crosswalk lines at intersections
-  for (let cx = -CITY_HALF; cx <= CITY_HALF; cx += BLOCK_SIZE) {
-    for (let cz = -CITY_HALF; cz <= CITY_HALF; cz += BLOCK_SIZE) {
-      addCrosswalk(cx, cz, lineMat);
-    }
-  }
 }
 
 function addCrosswalk(cx, cz, mat) {
@@ -821,9 +822,7 @@ function buildPlayer() {
   // Arms
   const armMat = toonMat(clothColor);
   [[-0.36, 0], [0.36, 0]].forEach(([ax, az], idx) => {
-    const armGeo = new THREE.CapsuleGeometry ?
-      new THREE.CapsuleGeometry(0.09, 0.35, 4, 8) :
-      new THREE.CylinderGeometry(0.08, 0.09, 0.42, 8);
+    const armGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.42, 8);
     const arm = new THREE.Mesh(armGeo, armMat);
     arm.position.set(ax, 0.98, az);
     arm.userData.isArm = true;
