@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HR Technology Roadmap</title>
+<style>
+/* ============================================================
+   Cummins brand tokens - Cummins Brand Book 2025 palette.
+   Prototype use only. The official logo/tagline artwork is NOT
+   recreated here; an approved asset must be dropped into the
+   header slot marked "logo asset".
+   ============================================================ */
+:root{
+  /* Established brand palette */
+  --red:#DA291C;
+  --black:#000000;
+  --white:#FFFFFF;
+  --asphalt:#2A2A2A;
+  --dark-gray:#474747;
+  --gray:#787877;
+  --silver:#A9A8A6;
+  --light-gray:#C9C9C7;
+  --platinum:#E0E0DF;
+
+  /* Broader palette */
+  --redwood:#680F14;
+  --dawn:#F1765A;
+  --canyon:#F1C194;
+  --dune:#E8D9C2;
+  --dune-light:#F4ECE0;
+  --mineral:#252B4D;
+  --tide:#55A1D3;
+  --summit:#A4D6E2;
+  --tundra:#D0DDE6;
+  --tundra-light:#E7EEF2;
+  --canopy:#023B3F;
+  --pasture:#30A566;
+  --willow:#E2EF86;
+  --mist:#D7DDB9;
+  --mist-light:#E8E9DA;
+
+  --font-display:"Cummins Innova Display","Cummins Innova",Aptos,Roboto,"Segoe UI",system-ui,Arial,sans-serif;
+  --font-text:"Cummins Innova Text","Cummins Innova",Aptos,Roboto,"Segoe UI",system-ui,Arial,sans-serif;
+
+  /* Layout */
+  --label-w:368px;
+  --colw:72px;
+  --row-h:38px;
+  --bar-h:24px;
+  --line:#EDEDEC;
+  --line-strong:#C9C9C7;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font-text);
+  font-size:14px;
+  line-height:1.45;
+  color:var(--black);
+  background:var(--white);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* ---------- App shell ---------- */
+.app{display:flex;flex-direction:column;min-height:100vh}
+
+.topbar{
+  background:var(--black);color:var(--white);
+  display:flex;align-items:center;gap:24px;
+  padding:0 24px;min-height:64px;flex-wrap:wrap;
+}
+.brandslot{
+  display:flex;align-items:center;justify-content:center;
+  width:120px;height:30px;flex:0 0 auto;
+  border:1px dashed rgba(255,255,255,.42);border-radius:2px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(255,255,255,.62);white-space:nowrap;
+}
+.brandbar{width:1px;align-self:stretch;background:rgba(255,255,255,.18);margin:14px 0}
+.apptitle{font-family:var(--font-display);font-size:17px;font-weight:700;white-space:nowrap}
+.apptitle span{color:var(--silver);font-weight:400;margin-left:10px;font-size:13px;font-family:var(--font-text)}
+
+.tabs{display:flex;gap:2px;margin-left:auto;align-self:stretch;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  background:none;border:0;color:rgba(255,255,255,.72);
+  padding:0 18px;height:100%;min-height:64px;cursor:pointer;
+  font-size:14px;font-weight:600;position:relative;white-space:nowrap;
+}
+.tab:hover{color:var(--white)}
+.tab[aria-selected="true"]{color:var(--white)}
+.tab[aria-selected="true"]::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;background:var(--red);
+}
+
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.view{display:none;flex:1;flex-direction:column;min-width:0}
+.view.is-active{display:flex}
+
+/* ---------- Toolbar ---------- */
+.toolbar{
+  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+  padding:16px 24px;border-bottom:1px solid var(--platinum);background:var(--white);
+}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field > label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dark-gray)}
+.control{
+  height:36px;padding:0 10px;border:1px solid var(--light-gray);border-radius:2px;
+  background:var(--white);min-width:130px;
+}
+select.control{padding-right:6px;cursor:pointer}
+input.control::placeholder{color:var(--gray)}
+.search{min-width:230px}
+.toolbar-spacer{margin-left:auto}
+.checkline{display:flex;align-items:center;gap:8px;height:36px;font-size:13px;cursor:pointer;white-space:nowrap}
+.checkline input{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
+
+.btn{
+  height:36px;padding:0 16px;border-radius:2px;border:1px solid var(--black);
+  background:var(--white);color:var(--black);font-weight:600;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.btn:hover{background:var(--black);color:var(--white)}
+.btn-primary{background:var(--red);border-color:var(--red);color:var(--white)}
+.btn-primary:hover{background:var(--redwood);border-color:var(--redwood);color:var(--white)}
+.btn-quiet{border-color:var(--light-gray);color:var(--dark-gray)}
+.btn-quiet:hover{background:var(--platinum);color:var(--black);border-color:var(--gray)}
+.btn-danger{border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--white)}
+.btn-sm{height:28px;padding:0 10px;font-size:12px}
+.btn-icon{width:28px;height:28px;padding:0;justify-content:center;border-color:var(--light-gray)}
+.btn svg{width:15px;height:15px;flex:0 0 auto}
+
+.segmented{display:inline-flex;border:1px solid var(--light-gray);border-radius:2px;overflow:hidden;height:36px}
+.segmented button{
+  border:0;background:var(--white);padding:0 12px;font-size:12px;font-weight:600;
+  color:var(--dark-gray);cursor:pointer;border-right:1px solid var(--light-gray);
+}
+.segmented button:last-child{border-right:0}
+.segmented button[aria-pressed="true"]{background:var(--asphalt);color:var(--white)}
+.segmented button:hover:not([aria-pressed="true"]){background:var(--platinum)}
+
+/* ---------- Gantt ---------- */
+.scroller{flex:1;overflow:auto;min-height:0;background:var(--white)}
+.gantt{width:max-content;min-width:100%;padding-bottom:56px}
+
+.ghead{
+  position:sticky;top:0;z-index:6;background:var(--white);
+  display:grid;grid-template-columns:var(--label-w) max-content;
+  border-bottom:2px solid var(--black);
+}
+.ghead-label{
+  position:sticky;left:0;z-index:7;background:var(--white);
+  border-right:1px solid var(--platinum);
+  display:flex;align-items:flex-end;padding:10px 16px 8px;
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);
+}
+.ghead-time{display:flex;flex-direction:column}
+.grow-years,.grow-quarters{display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.gyear{
+  grid-column:span 4;text-align:center;padding:9px 4px 7px;
+  font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.04em;
+  border-left:2px solid var(--light-gray);background:var(--white);
+}
+.gyear:first-child{border-left:0}
+.gq{
+  text-align:center;padding:3px 2px 7px;font-size:10.5px;font-weight:600;color:var(--gray);
+  border-left:1px solid var(--line);
+}
+.gq.q1{border-left:2px solid var(--light-gray)}
+.grow-quarters .gq:first-child{border-left:0}
+
+.gbody{position:relative}
+
+.grow{
+  display:grid;grid-template-columns:var(--label-w) max-content;
+  border-bottom:1px solid var(--line);min-height:var(--row-h);
+}
+.grow:hover .gcell-label{background:var(--tundra-light)}
+.grow:hover .gtrack{background-color:rgba(231,238,242,.5)}
+
+/* Lane / section header rows */
+.glane{
+  display:grid;grid-template-columns:var(--label-w) max-content;
+  border-bottom:1px solid var(--light-gray);border-top:1px solid var(--light-gray);
+  background:var(--platinum);
+}
+.glane + .glane{border-top:0}
+.glane-label{
+  position:sticky;left:0;z-index:4;background:var(--platinum);
+  display:flex;align-items:center;gap:10px;padding:9px 16px;
+  border-right:1px solid var(--light-gray);border-left:5px solid var(--lane,var(--black));
+}
+.glane-label h3{font-size:13px;letter-spacing:.03em;text-transform:uppercase}
+.glane-track{background:var(--platinum);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.glane-count{
+  margin-left:auto;font-size:11px;font-weight:700;color:var(--dark-gray);
+  background:var(--white);border-radius:10px;padding:1px 9px;
+}
+
+.gsub{
+  display:grid;grid-template-columns:var(--label-w) max-content;
+  border-bottom:1px solid var(--line);background:var(--tundra-light);
+}
+.gsub-label{
+  position:sticky;left:0;z-index:4;background:var(--tundra-light);
+  display:flex;align-items:center;gap:8px;padding:6px 16px 6px 30px;
+  border-right:1px solid var(--platinum);
+  font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dark-gray);
+}
+.gsub-label::before{content:"";width:8px;height:8px;background:var(--lane,var(--gray));flex:0 0 auto}
+.gsub-track{background:var(--tundra-light);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+
+/* Initiative label cell */
+.gcell-label{
+  position:sticky;left:0;z-index:3;background:var(--white);
+  border-right:1px solid var(--platinum);
+  padding:6px 14px 6px 30px;display:flex;flex-direction:column;justify-content:center;gap:2px;
+  cursor:pointer;min-width:0;
+}
+.gcell-title{
+  font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;
+  overflow:hidden;white-space:nowrap;min-width:0;
+}
+.gcell-title > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.gcell-title .flag{color:var(--red);flex:0 0 auto}
+.gcell-meta{
+  font-size:11px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.gcell-meta b{font-weight:600;color:var(--dark-gray)}
+
+/* Track + bars */
+.gtrack{
+  position:relative;display:grid;
+  grid-template-columns:repeat(var(--cols),var(--colw));
+  align-items:center;padding:6px 0;
+  background-image:
+    repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px var(--colw)),
+    repeating-linear-gradient(to right,var(--light-gray) 0 2px,transparent 2px calc(var(--colw) * 4));
+  background-position:left top;
+}
+.gbar{
+  grid-row:1;height:var(--bar-h);border-radius:2px;
+  background:var(--c,var(--gray));color:var(--fg,#fff);
+  display:flex;align-items:center;gap:6px;padding:0 8px;
+  margin:0 3px;position:relative;cursor:pointer;overflow:hidden;
+  font-size:11.5px;font-weight:600;line-height:1;
+  transition:filter .12s ease,transform .12s ease;
+}
+.gbar:hover{filter:brightness(1.12);transform:translateY(-1px);z-index:2}
+.gbar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbar .fill{
+  position:absolute;inset:0 auto 0 0;width:var(--p,0%);
+  background:rgba(0,0,0,.24);pointer-events:none;
+}
+.gbar.on-hold{opacity:.55}
+.gbar.at-risk{box-shadow:inset 0 0 0 2px var(--red)}
+.gbar.overflow-l{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 7px);mask-image:linear-gradient(to right,transparent 0,#000 7px)}
+.gbar.overflow-r{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;
+  -webkit-mask-image:linear-gradient(to left,transparent 0,#000 7px);mask-image:linear-gradient(to left,transparent 0,#000 7px)}
+.gbar.milestone{
+  width:var(--bar-h);min-width:var(--bar-h);padding:0;justify-self:start;margin-left:calc(var(--colw)/2 - var(--bar-h)/2);
+  transform:rotate(45deg);border-radius:2px;
+}
+.gbar.milestone:hover{transform:rotate(45deg) scale(1.12)}
+.gbar.milestone .lbl{display:none}
+.gbar-status{
+  width:7px;height:7px;border-radius:50%;flex:0 0 auto;
+  background:var(--sc,transparent);box-shadow:0 0 0 1.5px rgba(255,255,255,.75);
+}
+
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none}
+.today::after{
+  content:"Today";position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;
+  color:var(--red);background:var(--white);padding:0 4px;white-space:nowrap;
+}
+
+.empty{padding:64px 24px;text-align:center;color:var(--gray)}
+.empty h3{font-size:16px;color:var(--black);margin-bottom:6px}
+.empty p{margin:0 0 16px}
+
+/* ---------- Executive view ---------- */
+.exec-head{padding:22px 24px 4px}
+.exec-head h2{font-size:24px;margin-bottom:4px}
+.exec-head p{margin:0;color:var(--dark-gray);max-width:78ch}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
+  background:var(--platinum);border:1px solid var(--platinum);margin:18px 24px 0}
+.kpi{background:var(--white);padding:14px 16px}
+.kpi .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
+.kpi .n.accent{color:var(--red)}
+.kpi .k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--gray);margin-top:5px}
+.kpi .s{font-size:11.5px;color:var(--dark-gray);margin-top:3px}
+
+.exec-rollup .gcell-label{padding-left:22px}
+.gbar.rollup{height:26px;border-radius:2px;font-size:12px}
+.gbar.rollup .n{
+  background:rgba(255,255,255,.9);color:var(--black);border-radius:9px;
+  font-size:10.5px;font-weight:700;padding:1px 7px;flex:0 0 auto;margin-left:auto;
+}
+.gbar.rollup.light .n{background:rgba(0,0,0,.16);color:var(--black)}
+.grow.child .gcell-label{padding-left:52px}
+.grow.child .gcell-title{font-weight:500;font-size:12.5px;color:var(--dark-gray)}
+.disclose{
+  border:0;background:none;padding:0;margin-right:2px;cursor:pointer;color:var(--dark-gray);
+  display:inline-flex;align-items:center;flex:0 0 auto;
+}
+.disclose svg{width:12px;height:12px;transition:transform .15s ease}
+.disclose[aria-expanded="true"] svg{transform:rotate(90deg)}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 24px;border-top:1px solid var(--platinum);
+  background:var(--white);font-size:12px;color:var(--dark-gray)}
+.legend .grp{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.legend .grp > strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);font-weight:700}
+.legend .item{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:13px;height:13px;border-radius:2px;background:var(--c);flex:0 0 auto}
+.legend .sw.dot{border-radius:50%;width:10px;height:10px}
+.legend .sw.dia{transform:rotate(45deg);width:11px;height:11px}
+
+/* ---------- Admin console ---------- */
+.admin{display:grid;grid-template-columns:230px 1fr;flex:1;min-height:0}
+.admin-nav{border-right:1px solid var(--platinum);padding:18px 0;overflow:auto;background:var(--white)}
+.admin-nav h4{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);padding:0 20px;margin:16px 0 7px}
+.admin-nav h4:first-child{margin-top:0}
+.admin-nav button{
+  display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
+  padding:8px 20px;font-size:13.5px;font-weight:500;border-left:3px solid transparent;color:var(--dark-gray);
+}
+.admin-nav button:hover{background:var(--tundra-light);color:var(--black)}
+.admin-nav button[aria-current="true"]{border-left-color:var(--red);color:var(--black);font-weight:700;background:var(--tundra-light)}
+.admin-main{overflow:auto;padding:24px 28px 64px;min-width:0}
+.admin-main h2{font-size:20px;margin-bottom:5px}
+.admin-main > p.lede{margin:0 0 20px;color:var(--dark-gray);max-width:76ch}
+.panel{display:none}
+.panel.is-active{display:block}
+.panel-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.panel-head .grow-1{flex:1;min-width:240px}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl th{
+  text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);
+  font-weight:700;padding:0 12px 8px;border-bottom:1px solid var(--light-gray);white-space:nowrap;
+}
+table.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.tbl tr:hover td{background:var(--tundra-light)}
+table.tbl td.actions{text-align:right;white-space:nowrap}
+table.tbl td.actions .btn{margin-left:6px}
+.swatch{display:inline-flex;align-items:center;gap:9px}
+.swatch i{width:20px;height:20px;border-radius:2px;background:var(--c);border:1px solid rgba(0,0,0,.12);flex:0 0 auto}
+.usecount{font-size:12px;color:var(--gray)}
+.usecount.zero{color:var(--light-gray)}
+.tag{
+  display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;
+  background:var(--platinum);color:var(--dark-gray);
+}
+
+.notecard{
+  border:1px solid var(--platinum);border-left:4px solid var(--red);
+  padding:14px 16px;margin-bottom:22px;background:var(--dune-light);font-size:13px;
+}
+.notecard strong{display:block;margin-bottom:3px;font-family:var(--font-display)}
+
+.datagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.card{border:1px solid var(--platinum);padding:16px 18px}
+.card h4{font-size:14px;margin-bottom:6px}
+.card p{margin:0 0 14px;font-size:12.5px;color:var(--dark-gray)}
+textarea.control{height:auto;min-height:120px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;width:100%;resize:vertical}
+
+/* ---------- Dialog ---------- */
+dialog{
+  border:0;padding:0;max-width:min(860px,94vw);width:100%;
+  box-shadow:var(--shadow);background:var(--white);
+}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg-head{
+  display:flex;align-items:center;gap:14px;padding:18px 24px;
+  border-bottom:1px solid var(--platinum);
+}
+.dlg-head h3{font-size:18px;flex:1}
+.dlg-body{padding:22px 24px;max-height:min(66vh,620px);overflow:auto}
+.dlg-foot{
+  display:flex;align-items:center;gap:10px;padding:16px 24px;
+  border-top:1px solid var(--platinum);background:var(--dune-light);
+}
+.dlg-foot .spacer{margin-left:auto}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.formgrid .full{grid-column:1/-1}
+.formgrid .field .control{width:100%;min-width:0}
+.formgrid .field .hint{font-size:11.5px;color:var(--gray)}
+.rangeline{display:flex;align-items:center;gap:12px}
+.rangeline input[type=range]{flex:1;accent-color:var(--red)}
+.rangeline output{font-weight:700;font-size:13px;min-width:42px;text-align:right}
+.period{display:grid;grid-template-columns:1fr 88px;gap:8px}
+fieldset.grp{border:1px solid var(--platinum);padding:14px 16px 16px;grid-column:1/-1;margin:0}
+fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);padding:0 6px}
+.err{color:var(--red);font-size:12.5px;font-weight:600;display:none}
+.err.show{display:block}
+.colorrow{display:flex;gap:8px;align-items:center}
+.colorrow input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--light-gray);border-radius:2px;background:var(--white);cursor:pointer}
+.swatches{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.swatches button{width:22px;height:22px;border:1px solid rgba(0,0,0,.15);border-radius:2px;cursor:pointer;padding:0}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--black)}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+  background:var(--asphalt);color:var(--white);padding:11px 20px;border-radius:2px;
+  font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .2s ease;z-index:99;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:900px){
+  .admin{grid-template-columns:1fr}
+  .admin-nav{border-right:0;border-bottom:1px solid var(--platinum);display:flex;flex-wrap:wrap;padding:10px}
+  .admin-nav h4{display:none}
+  .admin-nav button{width:auto;border-left:0;border-bottom:3px solid transparent;padding:7px 12px}
+  .admin-nav button[aria-current="true"]{border-left-color:transparent;border-bottom-color:var(--red)}
+  .formgrid{grid-template-columns:1fr}
+  :root{--label-w:230px}
+}
+
+@media print{
+  .topbar,.toolbar,.admin-nav,.btn,.tabs{display:none!important}
+  .scroller{overflow:visible}
+  body{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <!-- Drop the approved Cummins logo asset (white version) in this slot. -->
+    <div class="brandslot" title="Insert approved Cummins logo asset (white)">Logo asset</div>
+    <div class="brandbar"></div>
+    <div class="apptitle">HR Technology Roadmap<span id="horizonLabel">2027&ndash;2029</span></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="tab-detail" aria-selected="true" aria-controls="view-detail" data-view="detail">Detailed Gantt</button>
+      <button class="tab" role="tab" id="tab-exec" aria-selected="false" aria-controls="view-exec" data-view="exec">Executive View</button>
+      <button class="tab" role="tab" id="tab-admin" aria-selected="false" aria-controls="view-admin" data-view="admin">Admin Console</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ DETAILED GANTT ============ -->
+    <section class="view is-active" id="view-detail" role="tabpanel" aria-labelledby="tab-detail">
+      <div class="toolbar">
+        <div class="field">
+          <label for="f-search">Search</label>
+          <input class="control search" id="f-search" type="search" placeholder="Initiative, owner, system, note&hellip;" />
+        </div>
+        <div class="field">
+          <label for="f-lane">Lane</label>
+          <select class="control" id="f-lane"></select>
+        </div>
+        <div class="field">
+          <label for="f-status">Status</label>
+          <select class="control" id="f-status"></select>
+        </div>
+        <div class="field">
+          <label for="f-owner">Owner</label>
+          <select class="control" id="f-owner"></select>
+        </div>
+        <div class="field">
+          <label for="f-theme">Theme</label>
+          <select class="control" id="f-theme"></select>
+        </div>
+        <div class="field">
+          <label for="f-platform">System</label>
+          <select class="control" id="f-platform"></select>
+        </div>
+        <label class="checkline"><input type="checkbox" id="f-exec" /> Spotlight only</label>
+        <div class="toolbar-spacer"></div>
+        <div class="field">
+          <label id="lbl-zoom">Zoom</label>
+          <div class="segmented" role="group" aria-labelledby="lbl-zoom">
+            <button data-zoom="46" type="button">S</button>
+            <button data-zoom="72" type="button" aria-pressed="true">M</button>
+            <button data-zoom="104" type="button">L</button>
+          </div>
+        </div>
+        <button class="btn btn-quiet" id="btn-clear-filters" type="button">Reset filters</button>
+        <button class="btn btn-primary" id="btn-add" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add initiative
+        </button>
+      </div>
+      <div class="scroller" id="detail-scroller">
+        <div class="gantt" id="detail-gantt"></div>
+      </div>
+      <div class="legend" id="detail-legend"></div>
+    </section>
+
+    <!-- ============ EXECUTIVE VIEW ============ -->
+    <section class="view" id="view-exec" role="tabpanel" aria-labelledby="tab-exec">
+      <div class="exec-head">
+        <h2>Portfolio at a glance</h2>
+        <p id="exec-sub"></p>
+      </div>
+      <div class="kpis" id="exec-kpis"></div>
+      <div class="toolbar">
+        <div class="field">
+          <label id="lbl-rollup">Roll up by</label>
+          <div class="segmented" role="group" aria-labelledby="lbl-rollup">
+            <button data-rollup="theme" type="button" aria-pressed="true">Theme</button>
+            <button data-rollup="lane" type="button">Lane</button>
+            <button data-rollup="owner" type="button">Owner</button>
+            <button data-rollup="platform" type="button">System</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fx-lane">Lane</label>
+          <select class="control" id="fx-lane"></select>
+        </div>
+        <label class="checkline"><input type="checkbox" id="fx-exec" /> Spotlight only</label>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-quiet" id="btn-expand-all" type="button">Expand all</button>
+        <button class="btn btn-quiet" id="btn-collapse-all" type="button">Collapse all</button>
+        <button class="btn btn-quiet" id="btn-print" type="button">Print / PDF</button>
+      </div>
+      <div class="scroller" id="exec-scroller">
+        <div class="gantt exec-rollup" id="exec-gantt"></div>
+      </div>
+      <div class="legend" id="exec-legend"></div>
+    </section>
+
+    <!-- ============ ADMIN CONSOLE ============ -->
+    <section class="view" id="view-admin" role="tabpanel" aria-labelledby="tab-admin">
+      <div class="admin">
+        <nav class="admin-nav" aria-label="Admin sections">
+          <h4>Structure</h4>
+          <button data-panel="lanes" aria-current="true" type="button">Lanes</button>
+          <button data-panel="sublanes" type="button">Sub-categories</button>
+          <button data-panel="timeline" type="button">Timeline horizon</button>
+          <h4>Classification</h4>
+          <button data-panel="themes" type="button">Themes</button>
+          <button data-panel="statuses" type="button">Statuses</button>
+          <button data-panel="priorities" type="button">Priorities</button>
+          <button data-panel="owners" type="button">Owners</button>
+          <button data-panel="platforms" type="button">Systems</button>
+          <h4>Data</h4>
+          <button data-panel="entries" type="button">All initiatives</button>
+          <button data-panel="data" type="button">Import / export</button>
+        </nav>
+        <div class="admin-main" id="admin-main"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ INITIATIVE DIALOG ============ -->
+<dialog id="dlg-entry">
+  <form method="dialog" id="form-entry">
+    <div class="dlg-head">
+      <h3 id="dlg-entry-title">Add initiative</h3>
+      <button class="btn btn-quiet btn-icon" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dlg-body">
+      <div class="formgrid">
+        <div class="field full">
+          <label for="e-title">Initiative name *</label>
+          <input class="control" id="e-title" required maxlength="140" />
+        </div>
+        <div class="field">
+          <label for="e-lane">Lane *</label>
+          <select class="control" id="e-lane" required></select>
+        </div>
+        <div class="field" id="e-sublane-wrap">
+          <label for="e-sublane">Sub-category</label>
+          <select class="control" id="e-sublane"></select>
+        </div>
+        <div class="field">
+          <label for="e-theme">Theme</label>
+          <select class="control" id="e-theme"></select>
+        </div>
+        <div class="field">
+          <label for="e-owner">Owner</label>
+          <select class="control" id="e-owner"></select>
+        </div>
+        <div class="field">
+          <label for="e-platform">System / platform</label>
+          <select class="control" id="e-platform"></select>
+        </div>
+        <div class="field">
+          <label for="e-status">Status</label>
+          <select class="control" id="e-status"></select>
+        </div>
+        <div class="field">
+          <label for="e-priority">Priority</label>
+          <select class="control" id="e-priority"></select>
+        </div>
+        <div class="field">
+          <label for="e-progress">Progress</label>
+          <div class="rangeline">
+            <input type="range" id="e-progress" min="0" max="100" step="5" value="0" />
+            <output id="e-progress-out">0%</output>
+          </div>
+        </div>
+        <fieldset class="grp">
+          <legend>Timeline</legend>
+          <div class="formgrid">
+            <div class="field">
+              <label for="e-start-year">Starts</label>
+              <div class="period">
+                <select class="control" id="e-start-year"></select>
+                <select class="control" id="e-start-q"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="e-end-year">Ends</label>
+              <div class="period">
+                <select class="control" id="e-end-year"></select>
+                <select class="control" id="e-end-q"></select>
+              </div>
+            </div>
+            <label class="checkline full"><input type="checkbox" id="e-milestone" /> Point-in-time milestone (renders as a marker at the start quarter)</label>
+            <label class="checkline full"><input type="checkbox" id="e-spotlight" /> Executive spotlight &mdash; flag for leadership review</label>
+          </div>
+        </fieldset>
+        <div class="field full">
+          <label for="e-notes">Notes</label>
+          <textarea class="control" id="e-notes" style="min-height:82px;font-family:var(--font-text);font-size:13px" maxlength="1200"></textarea>
+        </div>
+        <p class="err full" id="e-err"></p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn btn-danger" type="button" id="e-delete">Remove</button>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" type="button" data-close>Cancel</button>
+      <button class="btn btn-primary" type="button" id="e-save">Save initiative</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ VALUE DIALOG (admin) ============ -->
+<dialog id="dlg-value">
+  <form method="dialog" id="form-value">
+    <div class="dlg-head">
+      <h3 id="dlg-value-title">Add value</h3>
+      <button class="btn btn-quiet btn-icon" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dlg-body">
+      <div class="formgrid">
+        <div class="field full">
+          <label for="v-name">Name *</label>
+          <input class="control" id="v-name" required maxlength="80" />
+        </div>
+        <div class="field full" id="v-parent-wrap">
+          <label for="v-parent">Belongs to lane *</label>
+          <select class="control" id="v-parent"></select>
+        </div>
+        <div class="field full" id="v-color-wrap">
+          <label for="v-color">Colour</label>
+          <div class="colorrow">
+            <input type="color" id="v-color" value="#787877" />
+            <input class="control" id="v-color-hex" maxlength="7" style="width:110px;min-width:0" />
+          </div>
+          <div class="swatches" id="v-swatches"></div>
+          <span class="hint">Approved Cummins palette values only. Custom hex codes are off-brand.</span>
+        </div>
+        <div class="field full" id="v-desc-wrap">
+          <label for="v-desc">Description</label>
+          <input class="control" id="v-desc" maxlength="140" />
+        </div>
+        <p class="err full" id="v-err"></p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" type="button" data-close>Cancel</button>
+      <button class="btn btn-primary" type="button" id="v-save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   1. Constants
+   ============================================================ */
+var STORE_KEY = "cummins-hr-roadmap-v1";
+var QUARTERS  = ["Q1","Q2","Q3","Q4"];
+
+/* Approved Cummins Brand Book 2025 palette, offered in the admin colour picker. */
+var PALETTE = [
+  {name:"Cummins Red", hex:"#DA291C"}, {name:"Redwood", hex:"#680F14"},
+  {name:"Dawn",        hex:"#F1765A"}, {name:"Canyon",  hex:"#F1C194"},
+  {name:"Dune",        hex:"#E8D9C2"}, {name:"Mineral", hex:"#252B4D"},
+  {name:"Tide",        hex:"#55A1D3"}, {name:"Summit",  hex:"#A4D6E2"},
+  {name:"Tundra",      hex:"#D0DDE6"}, {name:"Canopy",  hex:"#023B3F"},
+  {name:"Pasture",     hex:"#30A566"}, {name:"Willow",  hex:"#E2EF86"},
+  {name:"Mist",        hex:"#D7DDB9"}, {name:"Asphalt", hex:"#2A2A2A"},
+  {name:"Dark gray",   hex:"#474747"}, {name:"Gray",    hex:"#787877"},
+  {name:"Silver",      hex:"#A9A8A6"}, {name:"Platinum",hex:"#E0E0DF"}
+];
+
+/* ============================================================
+   2. Seed content
+   Sample portfolio so the timeline is legible on first open.
+   Replace or clear it from Admin Console > Import / export.
+   ============================================================ */
+function seedState(){
+  var S = {
+    version:1,
+    config:{ startYear:2027, endYear:2029 },
+    lanes:[
+      {id:"ln-ai",  name:"AI Roadmap",                        color:"#55A1D3", hasSubLanes:false},
+      {id:"ln-str", name:"HR Goal Tree / Strategic",          color:"#252B4D", hasSubLanes:false},
+      {id:"ln-ops", name:"Operational",                       color:"#023B3F", hasSubLanes:true},
+      {id:"ln-fnd", name:"Foundational",                      color:"#F1C194", hasSubLanes:false},
+      {id:"ln-reg", name:"Regulatory, Legislative, Mandated", color:"#DA291C", hasSubLanes:false}
+    ],
+    subLanes:[
+      {id:"sl-upg", laneId:"ln-ops", name:"Upgrades",     color:"#023B3F"},
+      {id:"sl-enh", laneId:"ln-ops", name:"Enhancements", color:"#30A566"},
+      {id:"sl-sup", laneId:"ln-ops", name:"Support",      color:"#787877"}
+    ],
+    themes:[
+      {id:"th-ee", name:"Employee Experience",   color:"#55A1D3"},
+      {id:"th-ts", name:"Talent & Skills",       color:"#252B4D"},
+      {id:"th-oe", name:"Operational Excellence",color:"#023B3F"},
+      {id:"th-di", name:"Data & Integration",    color:"#F1C194"},
+      {id:"th-ct", name:"Compliance & Trust",    color:"#DA291C"},
+      {id:"th-ia", name:"Intelligent Automation",color:"#30A566"}
+    ],
+    statuses:[
+      {id:"st-nsr", name:"Not started", color:"#E0E0DF"},
+      {id:"st-pln", name:"Planned",     color:"#D0DDE6"},
+      {id:"st-prg", name:"In progress", color:"#55A1D3"},
+      {id:"st-rsk", name:"At risk",     color:"#DA291C"},
+      {id:"st-hld", name:"On hold",     color:"#A9A8A6"},
+      {id:"st-cmp", name:"Complete",    color:"#30A566"}
+    ],
+    priorities:[
+      {id:"pr-crt", name:"Critical", color:"#DA291C"},
+      {id:"pr-hgh", name:"High",     color:"#F1765A"},
+      {id:"pr-med", name:"Medium",   color:"#787877"},
+      {id:"pr-low", name:"Low",      color:"#C9C9C7"}
+    ],
+    owners:[
+      {id:"ow-hrt", name:"HR Technology",    desc:"Platform delivery"},
+      {id:"ow-tal", name:"Talent & Learning",desc:"CoE"},
+      {id:"ow-rew", name:"Total Rewards",    desc:"CoE"},
+      {id:"ow-ops", name:"HR Operations",    desc:"Shared services"},
+      {id:"ow-ana", name:"People Analytics", desc:"CoE"},
+      {id:"ow-cmp", name:"HR Compliance",    desc:"Legal & compliance partner"}
+    ],
+    platforms:[
+      {id:"pf-hcm", name:"Core HCM",            desc:"System of record"},
+      {id:"pf-tal", name:"Talent Suite",        desc:"Recruiting, performance, succession"},
+      {id:"pf-hsd", name:"HR Service Delivery", desc:"Case, knowledge, portal"},
+      {id:"pf-pay", name:"Payroll",             desc:"Global payroll estate"},
+      {id:"pf-tim", name:"Time & Attendance",   desc:""},
+      {id:"pf-lrn", name:"Learning Platform",   desc:""},
+      {id:"pf-anl", name:"People Analytics",    desc:"Reporting & data platform"},
+      {id:"pf-int", name:"Integration Layer",   desc:"Middleware & APIs"}
+    ],
+    entries:[]
+  };
+
+  /* [title, lane, subLane, theme, owner, platform, status, priority,
+      startY, startQ, endY, endQ, progress, milestone, spotlight, notes] */
+  var rows = [
+    ["AI governance & model risk framework","ln-ai",null,"th-ct","ow-cmp","pf-anl","st-prg","pr-crt",2027,1,2027,2,60,false,true,"Controls, documentation and human-oversight standards required before any HR model goes live."],
+    ["AI talent matching pilot","ln-ai",null,"th-ts","ow-tal","pf-tal","st-pln","pr-hgh",2027,1,2027,3,10,false,false,"Internal mobility matching against the skills library. Two business units in scope."],
+    ["HR virtual agent - tier 0 support","ln-ai",null,"th-ee","ow-ops","pf-hsd","st-pln","pr-hgh",2027,2,2028,1,0,false,true,"Conversational deflection for the top 40 employee query types."],
+    ["Generative job architecture assistant","ln-ai",null,"th-ts","ow-tal","pf-tal","st-nsr","pr-med",2027,3,2028,2,0,false,false,"Drafting support for job profiles, reviewed by Total Rewards before publication."],
+    ["AI skills inference engine","ln-ai",null,"th-ts","ow-ana","pf-anl","st-nsr","pr-hgh",2028,1,2028,4,0,false,false,"Infers skills from role, learning and project history to seed the skills graph."],
+    ["Predictive attrition modelling","ln-ai",null,"th-ia","ow-ana","pf-anl","st-nsr","pr-med",2028,3,2029,2,0,false,false,"Aggregate-level only. No individual scoring without works council agreement."],
+    ["Agentic HR case triage","ln-ai",null,"th-ia","ow-ops","pf-hsd","st-nsr","pr-med",2029,1,2029,4,0,false,false,""],
+
+    ["Global job architecture refresh","ln-str",null,"th-ts","ow-rew","pf-hcm","st-prg","pr-crt",2027,1,2028,2,25,false,true,"Single global job catalogue; prerequisite for skills-based work and pay transparency."],
+    ["Skills-based organisation roadmap","ln-str",null,"th-ts","ow-tal","pf-tal","st-pln","pr-crt",2027,2,2029,1,5,false,true,"Multi-year shift from job-based to skills-based talent processes."],
+    ["Employee listening strategy 2.0","ln-str",null,"th-ee","ow-tal","pf-anl","st-pln","pr-med",2027,1,2027,4,0,false,false,"Continuous listening replacing the annual survey cycle."],
+    ["Total rewards modernisation","ln-str",null,"th-ts","ow-rew","pf-hcm","st-nsr","pr-hgh",2028,1,2029,2,0,false,true,""],
+    ["Leadership succession digital twin","ln-str",null,"th-ts","ow-tal","pf-tal","st-nsr","pr-med",2029,1,2029,4,0,false,false,"Scenario modelling for critical-role coverage."],
+    ["HR operating model checkpoint","ln-str",null,"th-oe","ow-hrt","pf-hcm","st-nsr","pr-med",2028,2,2028,2,0,true,false,"Mid-horizon review of the HR service delivery model."],
+
+    ["Core HCM 2027 R1 release adoption","ln-ops","sl-upg","th-oe","ow-hrt","pf-hcm","st-pln","pr-hgh",2027,1,2027,2,0,false,false,""],
+    ["Core HCM 2027 R2 release adoption","ln-ops","sl-upg","th-oe","ow-hrt","pf-hcm","st-nsr","pr-hgh",2027,3,2027,4,0,false,false,""],
+    ["HR service delivery platform upgrade","ln-ops","sl-upg","th-ee","ow-ops","pf-hsd","st-nsr","pr-med",2028,1,2028,3,0,false,false,""],
+    ["Time & attendance version uplift","ln-ops","sl-upg","th-oe","ow-ops","pf-tim","st-nsr","pr-med",2028,2,2028,4,0,false,false,"Removes the last unsupported on-premise components."],
+    ["Learning platform major release","ln-ops","sl-upg","th-ee","ow-tal","pf-lrn","st-nsr","pr-low",2029,1,2029,2,0,false,false,""],
+
+    ["Manager self-service redesign","ln-ops","sl-enh","th-ee","ow-hrt","pf-hcm","st-prg","pr-hgh",2027,2,2028,1,35,false,true,"Task-based redesign of the top 12 manager journeys."],
+    ["Onboarding journey enhancements","ln-ops","sl-enh","th-ee","ow-ops","pf-hsd","st-pln","pr-med",2027,3,2028,2,0,false,false,""],
+    ["Absence & leave rules simplification","ln-ops","sl-enh","th-oe","ow-ops","pf-hcm","st-nsr","pr-med",2028,2,2028,4,0,false,false,"Reduces country leave variants from 180 to a governed set."],
+    ["Mobile HR experience enhancements","ln-ops","sl-enh","th-ee","ow-hrt","pf-hsd","st-nsr","pr-med",2029,1,2029,3,0,false,false,""],
+
+    ["Ticket deflection & knowledge refresh","ln-ops","sl-sup","th-ee","ow-ops","pf-hsd","st-prg","pr-med",2027,1,2027,3,45,false,false,""],
+    ["Payroll hypercare & stabilisation","ln-ops","sl-sup","th-oe","ow-ops","pf-pay","st-rsk","pr-crt",2027,1,2027,2,50,false,true,"Carry-over defects from the 2026 payroll consolidation."],
+    ["Integration monitoring & alerting uplift","ln-ops","sl-sup","th-di","ow-hrt","pf-int","st-nsr","pr-med",2028,1,2028,2,0,false,false,""],
+    ["Annual cyclical events support","ln-ops","sl-sup","th-oe","ow-ops","pf-hcm","st-prg","pr-hgh",2027,1,2029,4,0,false,false,"Merit, bonus, performance and open enrolment cycles, every year of the horizon."],
+
+    ["HR data model & master data governance","ln-fnd",null,"th-di","ow-ana","pf-anl","st-prg","pr-crt",2027,1,2028,2,20,false,true,"Definitions, ownership and quality thresholds for core people data."],
+    ["Identity & access management alignment","ln-fnd",null,"th-di","ow-hrt","pf-int","st-pln","pr-hgh",2027,2,2027,4,0,false,false,"Joiner-mover-leaver events as the single source for access provisioning."],
+    ["Integration platform modernisation","ln-fnd",null,"th-di","ow-hrt","pf-int","st-pln","pr-hgh",2027,3,2028,4,0,false,false,"Retires point-to-point interfaces in favour of governed APIs."],
+    ["People analytics lakehouse","ln-fnd",null,"th-di","ow-ana","pf-anl","st-nsr","pr-hgh",2028,1,2029,1,0,false,true,""],
+    ["HR records & retention automation","ln-fnd",null,"th-ct","ow-cmp","pf-hcm","st-nsr","pr-med",2029,1,2029,3,0,false,false,""],
+
+    ["EU pay transparency directive readiness","ln-reg",null,"th-ct","ow-rew","pf-hcm","st-prg","pr-crt",2027,1,2027,2,55,false,true,"Reporting, gap analysis and remediation workflow ahead of the compliance date."],
+    ["Pay transparency compliance date","ln-reg",null,"th-ct","ow-cmp","pf-hcm","st-pln","pr-crt",2027,2,2027,2,0,true,true,"Hard external deadline."],
+    ["AI Act conformity for HR systems","ln-reg",null,"th-ct","ow-cmp","pf-tal","st-prg","pr-crt",2027,1,2028,1,15,false,true,"Classification, conformity assessment and registration for high-risk HR use cases."],
+    ["Works council data compliance","ln-reg",null,"th-ct","ow-cmp","pf-hcm","st-pln","pr-hgh",2027,2,2027,4,0,false,false,""],
+    ["CSRD workforce disclosure reporting","ln-reg",null,"th-ct","ow-ana","pf-anl","st-pln","pr-hgh",2027,3,2028,2,0,false,false,"Assurance-ready workforce metrics for sustainability reporting."],
+    ["Data residency & cross-border controls","ln-reg",null,"th-ct","ow-cmp","pf-int","st-nsr","pr-hgh",2028,1,2028,3,0,false,false,""],
+    ["Global payroll statutory updates","ln-reg",null,"th-ct","ow-ops","pf-pay","st-prg","pr-crt",2027,1,2029,4,0,false,false,"Continuous legislative maintenance across all payroll countries."]
+  ];
+
+  rows.forEach(function(r,i){
+    S.entries.push({
+      id:"en-"+(i+1), title:r[0], laneId:r[1], subLaneId:r[2], themeId:r[3],
+      ownerId:r[4], platformId:r[5], statusId:r[6], priorityId:r[7],
+      sy:r[8], sq:r[9], ey:r[10], eq:r[11],
+      progress:r[12], milestone:r[13], spotlight:r[14], notes:r[15]
+    });
+  });
+  return S;
+}
+
+/* ============================================================
+   3. State + storage
+   ============================================================ */
+var state = null;
+var ui = {
+  view:"detail",
+  zoom:72,
+  search:"",
+  filters:{lane:"",status:"",owner:"",theme:"",platform:"",execOnly:false},
+  execFilters:{lane:"",execOnly:false},
+  rollup:"theme",
+  expanded:{},
+  adminPanel:"lanes"
+};
+
+function uid(prefix){
+  return prefix+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(err){ toast("Could not save locally - changes live in this tab only"); }
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return null;
+    var parsed = JSON.parse(raw);
+    return normalise(parsed) ? parsed : null;
+  }catch(err){ return null; }
+}
+/* Defensive: an older or hand-edited payload must not break the app. */
+function normalise(S){
+  if(!S || typeof S!=="object") return false;
+  var lists = ["lanes","subLanes","themes","statuses","priorities","owners","platforms","entries"];
+  for(var i=0;i<lists.length;i++){ if(!Array.isArray(S[lists[i]])) S[lists[i]] = []; }
+  if(!S.config || typeof S.config!=="object") S.config = {startYear:2027,endYear:2029};
+  S.config.startYear = clampYear(S.config.startYear, 2027);
+  S.config.endYear   = clampYear(S.config.endYear, S.config.startYear+2);
+  if(S.config.endYear < S.config.startYear) S.config.endYear = S.config.startYear;
+  S.entries.forEach(function(e){
+    e.progress = Math.max(0, Math.min(100, Number(e.progress)||0));
+    e.sq = clampQ(e.sq); e.eq = clampQ(e.eq);
+    e.sy = clampYear(e.sy, S.config.startYear); e.ey = clampYear(e.ey, e.sy);
+    e.milestone = !!e.milestone; e.spotlight = !!e.spotlight;
+  });
+  return true;
+}
+function clampYear(y, fallback){
+  y = Math.round(Number(y));
+  return (isFinite(y) && y>=2000 && y<=2100) ? y : fallback;
+}
+function clampQ(q){ q = Math.round(Number(q)); return (q>=1 && q<=4) ? q : 1; }
+
+/* ============================================================
+   4. Small helpers
+   ============================================================ */
+var $  = function(sel,root){ return (root||document).querySelector(sel); };
+var $$ = function(sel,root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); };
+
+function el(tag, cls, text){
+  var n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(text!=null) n.textContent = text;
+  return n;
+}
+function byId(list,id){
+  for(var i=0;i<list.length;i++){ if(list[i].id===id) return list[i]; }
+  return null;
+}
+function nameOf(list,id,fallback){
+  var it = byId(list,id);
+  return it ? it.name : (fallback||"");
+}
+/* Relative luminance -> readable foreground, so bar labels stay legible
+   on both Canyon and Redwood. */
+function readableOn(hex){
+  var c = String(hex||"").replace("#","");
+  if(c.length===3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  if(c.length!==6) return "#FFFFFF";
+  var ch = [0,2,4].map(function(i){
+    var v = parseInt(c.substr(i,2),16)/255;
+    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
+  });
+  var L = 0.2126*ch[0] + 0.7152*ch[1] + 0.0722*ch[2];
+  return L > 0.42 ? "#000000" : "#FFFFFF";
+}
+var toastTimer = null;
+function toast(msg){
+  var t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+function esc(s){ return String(s==null?"":s); }
+
+/* ---- Timeline maths ---- */
+function years(){
+  var out = [];
+  for(var y=state.config.startYear; y<=state.config.endYear; y++) out.push(y);
+  return out;
+}
+function colCount(){ return years().length * 4; }
+function colIndex(y,q){ return (y - state.config.startYear)*4 + (clampQ(q)-1); }
+function periodLabel(y,q){ return QUARTERS[clampQ(q)-1]+" "+y; }
+function spanLabel(e){
+  return e.milestone ? periodLabel(e.sy,e.sq)
+                     : periodLabel(e.sy,e.sq)+" – "+periodLabel(e.ey,e.eq);
+}
+
+/* ============================================================
+   5. Shared gantt construction
+   ============================================================ */
+function ganttHeader(){
+  var ys = years(), cols = colCount();
+  var head = el("div","ghead");
+  head.style.setProperty("--cols", cols);
+
+  var lab = el("div","ghead-label","Initiative");
+  head.appendChild(lab);
+
+  var time = el("div","ghead-time");
+  var yrow = el("div","grow-years");
+  yrow.style.setProperty("--cols", cols);
+  ys.forEach(function(y){ yrow.appendChild(el("div","gyear",String(y))); });
+  var qrow = el("div","grow-quarters");
+  qrow.style.setProperty("--cols", cols);
+  ys.forEach(function(y){
+    QUARTERS.forEach(function(q,i){
+      qrow.appendChild(el("div","gq q"+(i+1), q));
+    });
+  });
+  time.appendChild(yrow); time.appendChild(qrow);
+  head.appendChild(time);
+  return head;
+}
+
+function makeTrack(cls){
+  var t = el("div", cls || "gtrack");
+  t.style.setProperty("--cols", colCount());
+  return t;
+}
+
+/* Places a bar in the track grid, clipping to the configured horizon
+   and flagging spans that run off either edge. */
+function placeBar(track, startIdx, endIdx, opts){
+  var cols = colCount();
+  if(endIdx < 0 || startIdx > cols-1) return null;
+
+  var overflowL = startIdx < 0, overflowR = endIdx > cols-1;
+  var s = Math.max(0, startIdx), e = Math.min(cols-1, endIdx);
+
+  var bar = el("div","gbar"+(opts.extraClass?" "+opts.extraClass:""));
+  bar.style.gridColumn = (s+1)+" / "+(e+2);
+  bar.style.setProperty("--c", opts.color);
+  bar.style.setProperty("--fg", readableOn(opts.color));
+  if(overflowL) bar.classList.add("overflow-l");
+  if(overflowR) bar.classList.add("overflow-r");
+  if(opts.progress) bar.style.setProperty("--p", opts.progress+"%");
+
+  if(opts.progress){ bar.appendChild(el("span","fill")); }
+  if(opts.statusColor){
+    var dot = el("span","gbar-status");
+    dot.style.setProperty("--sc", opts.statusColor);
+    bar.appendChild(dot);
+  }
+  if(opts.label){ bar.appendChild(el("span","lbl", opts.label)); }
+  if(opts.count!=null){
+    var n = el("span","n", opts.count+(opts.count===1?" item":" items"));
+    bar.appendChild(n);
+    if(readableOn(opts.color)==="#000000") bar.classList.add("light");
+  }
+  if(opts.title) bar.title = opts.title;
+  track.appendChild(bar);
+  return bar;
+}
+
+function todayMarker(){
+  var now = new Date();
+  var y = now.getFullYear(), q = Math.floor(now.getMonth()/3)+1;
+  if(y < state.config.startYear || y > state.config.endYear) return null;
+  var idx = colIndex(y,q);
+  var frac = (now.getMonth()%3)/3 + (now.getDate()/31)/3;
+  var m = el("div","today");
+  m.style.left = "calc(var(--label-w) + " + (idx+frac) + " * var(--colw))";
+  return m;
+}
+
+function laneRow(lane, count){
+  var row = el("div","glane");
+  var lab = el("div","glane-label");
+  lab.style.setProperty("--lane", lane.color);
+  lab.appendChild(el("h3", null, lane.name));
+  if(count!=null) lab.appendChild(el("span","glane-count", String(count)));
+  row.appendChild(lab);
+  row.appendChild(makeTrack("glane-track"));
+  return row;
+}
+function subRow(sub){
+  var row = el("div","gsub");
+  var lab = el("div","gsub-label", sub.name);
+  lab.style.setProperty("--lane", sub.color);
+  row.appendChild(lab);
+  row.appendChild(makeTrack("gsub-track"));
+  return row;
+}
+
+function emptyBlock(title, msg, actionLabel, action){
+  var box = el("div","empty");
+  box.appendChild(el("h3",null,title));
+  box.appendChild(el("p",null,msg));
+  if(actionLabel){
+    var b = el("button","btn btn-primary",actionLabel);
+    b.type = "button";
+    b.addEventListener("click", action);
+    box.appendChild(b);
+  }
+  return box;
+}
+
+/* ============================================================
+   6. Detailed gantt view
+   ============================================================ */
+function matchesFilters(e){
+  var f = ui.filters;
+  if(f.lane && e.laneId!==f.lane) return false;
+  if(f.status && e.statusId!==f.status) return false;
+  if(f.owner && e.ownerId!==f.owner) return false;
+  if(f.theme && e.themeId!==f.theme) return false;
+  if(f.platform && e.platformId!==f.platform) return false;
+  if(f.execOnly && !e.spotlight) return false;
+  if(ui.search){
+    var hay = [
+      e.title, e.notes,
+      nameOf(state.owners,e.ownerId), nameOf(state.platforms,e.platformId),
+      nameOf(state.themes,e.themeId), nameOf(state.lanes,e.laneId),
+      nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId)
+    ].join(" ").toLowerCase();
+    if(hay.indexOf(ui.search.toLowerCase())<0) return false;
+  }
+  return true;
+}
+
+function sortEntries(a,b){
+  var sa = colIndex(a.sy,a.sq), sb = colIndex(b.sy,b.sq);
+  if(sa!==sb) return sa-sb;
+  return a.title.localeCompare(b.title);
+}
+
+function entryRow(e, childOf){
+  var lane = byId(state.lanes, e.laneId);
+  var sub  = byId(state.subLanes, e.subLaneId);
+  var status = byId(state.statuses, e.statusId);
+  var color = (sub && sub.color) || (lane && lane.color) || "#787877";
+
+  var row = el("div","grow"+(childOf?" child":""));
+  row.setAttribute("data-id", e.id);
+
+  var lab = el("div","gcell-label");
+  lab.tabIndex = 0;
+  lab.setAttribute("role","button");
+  lab.setAttribute("aria-label","Edit "+e.title);
+
+  var title = el("div","gcell-title");
+  if(e.spotlight){
+    var flag = el("span","flag");
+    flag.textContent = "★";
+    flag.title = "Executive spotlight";
+    title.appendChild(flag);
+  }
+  title.appendChild(el("span",null,e.title));
+  lab.appendChild(title);
+
+  var bits = [];
+  if(status) bits.push(status.name);
+  if(e.ownerId) bits.push(nameOf(state.owners,e.ownerId));
+  if(e.platformId) bits.push(nameOf(state.platforms,e.platformId));
+  bits.push(spanLabel(e));
+  var meta = el("div","gcell-meta", bits.filter(Boolean).join(" · "));
+  lab.appendChild(meta);
+
+  lab.addEventListener("click", function(){ openEntryDialog(e.id); });
+  lab.addEventListener("keydown", function(ev){
+    if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openEntryDialog(e.id); }
+  });
+  row.appendChild(lab);
+
+  var track = makeTrack();
+  var s = colIndex(e.sy,e.sq);
+  var en = e.milestone ? s : colIndex(e.ey,e.eq);
+  var extra = [];
+  if(e.milestone) extra.push("milestone");
+  if(status && status.name==="At risk") extra.push("at-risk");
+  if(status && status.name==="On hold") extra.push("on-hold");
+
+  var bar = placeBar(track, s, en, {
+    color: color,
+    label: e.milestone ? "" : e.title,
+    progress: e.milestone ? 0 : e.progress,
+    statusColor: (status && !e.milestone) ? status.color : null,
+    extraClass: extra.join(" "),
+    title: e.title + "\n" + spanLabel(e) + (status? "\n"+status.name : "") + (e.progress? "  ·  "+e.progress+"% complete":"")
+  });
+  if(bar){
+    bar.addEventListener("click", function(){ openEntryDialog(e.id); });
+  }else{
+    track.appendChild(el("div","gcell-meta","Outside the configured horizon"));
+  }
+  row.appendChild(track);
+  return row;
+}
+
+function renderDetail(){
+  var host = $("#detail-gantt");
+  host.innerHTML = "";
+  host.style.setProperty("--colw", ui.zoom+"px");
+
+  var visible = state.entries.filter(matchesFilters);
+  host.appendChild(ganttHeader());
+
+  if(!visible.length){
+    host.appendChild(emptyBlock(
+      state.entries.length ? "No initiatives match these filters" : "No initiatives yet",
+      state.entries.length ? "Adjust or reset the filters to see the rest of the portfolio."
+                           : "Add the first initiative to start building the roadmap.",
+      state.entries.length ? "Reset filters" : "Add initiative",
+      state.entries.length ? function(){ resetFilters(); } : function(){ openEntryDialog(null); }
+    ));
+    renderLegend($("#detail-legend"));
+    return;
+  }
+
+  var body = el("div","gbody");
+  state.lanes.forEach(function(lane){
+    var inLane = visible.filter(function(e){ return e.laneId===lane.id; });
+    if(!inLane.length) return;
+    body.appendChild(laneRow(lane, inLane.length));
+
+    if(lane.hasSubLanes){
+      var subs = state.subLanes.filter(function(s){ return s.laneId===lane.id; });
+      subs.forEach(function(sub){
+        var inSub = inLane.filter(function(e){ return e.subLaneId===sub.id; }).sort(sortEntries);
+        if(!inSub.length) return;
+        body.appendChild(subRow(sub));
+        inSub.forEach(function(e){ body.appendChild(entryRow(e)); });
+      });
+      var orphans = inLane.filter(function(e){
+        return !e.subLaneId || !byId(state.subLanes, e.subLaneId);
+      }).sort(sortEntries);
+      if(orphans.length){
+        body.appendChild(subRow({name:"Unassigned", color:"#A9A8A6"}));
+        orphans.forEach(function(e){ body.appendChild(entryRow(e)); });
+      }
+    }else{
+      inLane.sort(sortEntries).forEach(function(e){ body.appendChild(entryRow(e)); });
+    }
+  });
+
+  /* Entries whose lane was removed in the admin console still need a home. */
+  var homeless = visible.filter(function(e){ return !byId(state.lanes, e.laneId); }).sort(sortEntries);
+  if(homeless.length){
+    body.appendChild(laneRow({name:"Unassigned lane", color:"#A9A8A6"}, homeless.length));
+    homeless.forEach(function(e){ body.appendChild(entryRow(e)); });
+  }
+
+  var marker = todayMarker();
+  if(marker) body.appendChild(marker);
+  host.appendChild(body);
+  renderLegend($("#detail-legend"));
+}
+
+function renderLegend(host){
+  host.innerHTML = "";
+  var g1 = el("div","grp");
+  g1.appendChild(el("strong",null,"Lanes"));
+  state.lanes.forEach(function(l){
+    var it = el("span","item");
+    var sw = el("i","sw"); sw.style.setProperty("--c", l.color);
+    it.appendChild(sw); it.appendChild(el("span",null,l.name));
+    g1.appendChild(it);
+  });
+  state.subLanes.forEach(function(s){
+    var it = el("span","item");
+    var sw = el("i","sw"); sw.style.setProperty("--c", s.color);
+    it.appendChild(sw); it.appendChild(el("span",null,s.name));
+    g1.appendChild(it);
+  });
+  host.appendChild(g1);
+
+  var g2 = el("div","grp");
+  g2.appendChild(el("strong",null,"Status"));
+  state.statuses.forEach(function(s){
+    var it = el("span","item");
+    var sw = el("i","sw dot"); sw.style.setProperty("--c", s.color);
+    it.appendChild(sw); it.appendChild(el("span",null,s.name));
+    g2.appendChild(it);
+  });
+  host.appendChild(g2);
+
+  var g3 = el("div","grp");
+  g3.appendChild(el("strong",null,"Markers"));
+  var m1 = el("span","item");
+  var d = el("i","sw dia"); d.style.setProperty("--c","#2A2A2A");
+  m1.appendChild(d); m1.appendChild(el("span",null,"Milestone"));
+  g3.appendChild(m1);
+  var m2 = el("span","item");
+  m2.appendChild(el("span",null,"★ Executive spotlight"));
+  g3.appendChild(m2);
+  host.appendChild(g3);
+}
+
+/* ============================================================
+   7. Executive view
+   ============================================================ */
+function execEntries(){
+  return state.entries.filter(function(e){
+    if(ui.execFilters.lane && e.laneId!==ui.execFilters.lane) return false;
+    if(ui.execFilters.execOnly && !e.spotlight) return false;
+    return true;
+  });
+}
+
+function renderExecKpis(list){
+  var host = $("#exec-kpis");
+  host.innerHTML = "";
+
+  var statusName = function(e){ return nameOf(state.statuses, e.statusId); };
+  var inFlight = list.filter(function(e){ return statusName(e)==="In progress"; }).length;
+  var atRisk   = list.filter(function(e){ return statusName(e)==="At risk"; }).length;
+  var spot     = list.filter(function(e){ return e.spotlight; }).length;
+  var regLane  = state.lanes.filter(function(l){ return /regulatory/i.test(l.name); })[0];
+  var mandated = regLane ? list.filter(function(e){ return e.laneId===regLane.id; }).length : 0;
+  var firstYear = state.config.startYear;
+  var landing = list.filter(function(e){ return e.ey===firstYear || (e.milestone && e.sy===firstYear); }).length;
+
+  var cards = [
+    {n:list.length, k:"Initiatives in horizon", s:state.config.startYear+"–"+state.config.endYear},
+    {n:inFlight,    k:"In progress",            s:"Active delivery today"},
+    {n:atRisk,      k:"At risk",                s:"Need leadership attention", accent:atRisk>0},
+    {n:spot,        k:"Executive spotlight",    s:"Flagged for review"},
+    {n:mandated,    k:"Regulatory & mandated",  s:"Non-discretionary"},
+    {n:landing,     k:"Landing in "+firstYear,  s:"Complete or due this year"}
+  ];
+  cards.forEach(function(c){
+    var box = el("div","kpi");
+    var n = el("div","n"+(c.accent?" accent":""), String(c.n));
+    box.appendChild(n);
+    box.appendChild(el("div","k", c.k));
+    box.appendChild(el("div","s", c.s));
+    host.appendChild(box);
+  });
+
+  $("#exec-sub").textContent =
+    "Roll-up of the HR technology portfolio across " + state.lanes.length + " lanes and " +
+    (state.config.endYear - state.config.startYear + 1) + " planning years. " +
+    "Expand any band to see the initiatives behind it.";
+}
+
+/* Aggregate span + composition for a set of entries. */
+function aggregate(items){
+  var minS = Infinity, maxE = -Infinity, risk = false, done = 0, prog = 0;
+  items.forEach(function(e){
+    var s = colIndex(e.sy,e.sq);
+    var en = e.milestone ? s : colIndex(e.ey,e.eq);
+    if(s<minS) minS = s;
+    if(en>maxE) maxE = en;
+    var sn = nameOf(state.statuses,e.statusId);
+    if(sn==="At risk") risk = true;
+    if(sn==="Complete") done++;
+    prog += (Number(e.progress)||0);
+  });
+  return {
+    start:minS, end:maxE, atRisk:risk, complete:done,
+    progress: items.length ? Math.round(prog/items.length) : 0
+  };
+}
+
+function rollupGroups(items){
+  var dim = ui.rollup;
+  var listFor = {theme:state.themes, owner:state.owners, platform:state.platforms}[dim];
+  var keyFor  = {theme:"themeId", owner:"ownerId", platform:"platformId"}[dim];
+  var groups = [], seen = {};
+
+  (listFor||[]).forEach(function(v){
+    var members = items.filter(function(e){ return e[keyFor]===v.id; });
+    if(members.length){
+      groups.push({id:v.id, name:v.name, color:v.color||null, members:members});
+      seen[v.id] = true;
+    }
+  });
+  var rest = items.filter(function(e){ return !e[keyFor] || !seen[e[keyFor]]; });
+  if(rest.length) groups.push({id:"__none", name:"Unassigned", color:"#A9A8A6", members:rest});
+  return groups;
+}
+
+function rollupRow(opts){
+  var key = opts.key;
+  var open = !!ui.expanded[key];
+
+  var row = el("div","grow");
+  var lab = el("div","gcell-label");
+
+  var title = el("div","gcell-title");
+  var btn = el("button","disclose");
+  btn.type = "button";
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  btn.setAttribute("aria-label", (open?"Collapse ":"Expand ")+opts.name);
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+  btn.addEventListener("click", function(ev){
+    ev.stopPropagation();
+    ui.expanded[key] = !ui.expanded[key];
+    renderExec();
+  });
+  title.appendChild(btn);
+  title.appendChild(el("span",null,opts.name));
+  lab.appendChild(title);
+
+  var agg = opts.agg;
+  var meta = [];
+  meta.push(opts.members.length + (opts.members.length===1?" initiative":" initiatives"));
+  if(agg.complete) meta.push(agg.complete+" complete");
+  if(agg.progress) meta.push(agg.progress+"% avg progress");
+  if(agg.atRisk) meta.push("at risk");
+  lab.appendChild(el("div","gcell-meta", meta.join(" · ")));
+
+  lab.addEventListener("click", function(){
+    ui.expanded[key] = !ui.expanded[key];
+    renderExec();
+  });
+  row.appendChild(lab);
+
+  var track = makeTrack();
+  var bar = placeBar(track, agg.start, agg.end, {
+    color: opts.color,
+    label: opts.name,
+    count: opts.members.length,
+    progress: agg.progress,
+    extraClass: agg.atRisk ? "rollup at-risk" : "rollup",
+    title: opts.name + "\n" + opts.members.length + " initiatives"
+  });
+  if(bar){
+    bar.addEventListener("click", function(){
+      ui.expanded[key] = !ui.expanded[key];
+      renderExec();
+    });
+  }
+  row.appendChild(track);
+  return {row:row, open:open};
+}
+
+function renderExec(){
+  var host = $("#exec-gantt");
+  host.innerHTML = "";
+  host.style.setProperty("--colw", ui.zoom+"px");
+
+  var items = execEntries();
+  renderExecKpis(items);
+  host.appendChild(ganttHeader());
+
+  if(!items.length){
+    host.appendChild(emptyBlock("Nothing to roll up",
+      "No initiatives match the current selection.", null, null));
+    renderLegend($("#exec-legend"));
+    return;
+  }
+
+  var body = el("div","gbody");
+
+  state.lanes.forEach(function(lane){
+    var inLane = items.filter(function(e){ return e.laneId===lane.id; });
+    if(!inLane.length) return;
+
+    if(ui.rollup==="lane"){
+      /* One band per lane, or per sub-category where the lane has them. */
+      if(lane.hasSubLanes){
+        body.appendChild(laneRow(lane, inLane.length));
+        var subs = state.subLanes.filter(function(s){ return s.laneId===lane.id; });
+        var used = {};
+        subs.forEach(function(sub){
+          var mem = inLane.filter(function(e){ return e.subLaneId===sub.id; });
+          if(!mem.length) return;
+          mem.forEach(function(e){ used[e.id]=true; });
+          appendBand(body, "lane:"+lane.id+":"+sub.id, sub.name, sub.color, mem);
+        });
+        var rest = inLane.filter(function(e){ return !used[e.id]; });
+        if(rest.length) appendBand(body, "lane:"+lane.id+":none", "Unassigned", "#A9A8A6", rest);
+      }else{
+        appendBand(body, "lane:"+lane.id, lane.name, lane.color, inLane);
+      }
+    }else{
+      body.appendChild(laneRow(lane, inLane.length));
+      rollupGroups(inLane).forEach(function(g){
+        appendBand(body, ui.rollup+":"+lane.id+":"+g.id, g.name, lane.color, g.members);
+      });
+    }
+  });
+
+  var homeless = items.filter(function(e){ return !byId(state.lanes, e.laneId); });
+  if(homeless.length){
+    body.appendChild(laneRow({name:"Unassigned lane", color:"#A9A8A6"}, homeless.length));
+    appendBand(body, "orphan", "Unassigned lane", "#A9A8A6", homeless);
+  }
+
+  var marker = todayMarker();
+  if(marker) body.appendChild(marker);
+  host.appendChild(body);
+  renderLegend($("#exec-legend"));
+}
+
+function appendBand(body, key, name, color, members){
+  var res = rollupRow({
+    key:key, name:name, color:color, members:members, agg:aggregate(members)
+  });
+  body.appendChild(res.row);
+  if(res.open){
+    members.slice().sort(sortEntries).forEach(function(e){
+      body.appendChild(entryRow(e, true));
+    });
+  }
+}
+
+/* ============================================================
+   8. Admin console
+   ============================================================ */
+var ADMIN = {
+  lanes:{
+    key:"lanes", title:"Lanes",
+    lede:"The top-level swimlanes of the roadmap. Order here is the order used on both timelines.",
+    singular:"lane", color:true, parent:false, desc:false, orderable:true, field:"laneId"
+  },
+  sublanes:{
+    key:"subLanes", title:"Sub-categories",
+    lede:"Sub-categories sit inside a lane. Only lanes with sub-categories enabled can hold them.",
+    singular:"sub-category", color:true, parent:true, desc:false, orderable:true, field:"subLaneId"
+  },
+  themes:{
+    key:"themes", title:"Themes",
+    lede:"Portfolio themes used to roll initiatives up on the executive view.",
+    singular:"theme", color:true, parent:false, desc:false, orderable:true, field:"themeId"
+  },
+  statuses:{
+    key:"statuses", title:"Statuses",
+    lede:"Delivery statuses. “At risk” and “On hold” change how a bar is drawn, so keep those names if you rely on that treatment.",
+    singular:"status", color:true, parent:false, desc:false, orderable:true, field:"statusId"
+  },
+  priorities:{
+    key:"priorities", title:"Priorities",
+    lede:"Priority values available on the initiative form.",
+    singular:"priority", color:true, parent:false, desc:false, orderable:true, field:"priorityId"
+  },
+  owners:{
+    key:"owners", title:"Owners",
+    lede:"Accountable teams or roles. Shown under every initiative and available as a roll-up dimension.",
+    singular:"owner", color:false, parent:false, desc:true, orderable:true, field:"ownerId"
+  },
+  platforms:{
+    key:"platforms", title:"Systems",
+    lede:"Systems and platforms an initiative touches.",
+    singular:"system", color:false, parent:false, desc:true, orderable:true, field:"platformId"
+  }
+};
+
+function usageCount(field, id){
+  return state.entries.filter(function(e){ return e[field]===id; }).length;
+}
+
+function renderAdmin(){
+  var host = $("#admin-main");
+  host.innerHTML = "";
+  var panel = ui.adminPanel;
+
+  $$("#view-admin .admin-nav button").forEach(function(b){
+    b.setAttribute("aria-current", b.dataset.panel===panel ? "true" : "false");
+  });
+
+  if(ADMIN[panel]) return renderCollectionPanel(host, ADMIN[panel]);
+  if(panel==="timeline") return renderTimelinePanel(host);
+  if(panel==="entries")  return renderEntriesPanel(host);
+  if(panel==="data")     return renderDataPanel(host);
+}
+
+function renderCollectionPanel(host, cfg){
+  var list = state[cfg.key];
+
+  host.appendChild(el("h2",null,cfg.title));
+  host.appendChild(el("p","lede",cfg.lede));
+
+  var head = el("div","panel-head");
+  head.appendChild(el("div","grow-1"));
+  var add = el("button","btn btn-primary","Add "+cfg.singular);
+  add.type = "button";
+  add.addEventListener("click", function(){ openValueDialog(cfg, null); });
+  head.appendChild(add);
+  host.appendChild(head);
+
+  if(!list.length){
+    host.appendChild(emptyBlock("No "+cfg.title.toLowerCase()+" defined",
+      "Add the first value to make it selectable on the initiative form.",
+      "Add "+cfg.singular, function(){ openValueDialog(cfg,null); }));
+    return;
+  }
+
+  var tbl = el("table","tbl");
+  var thead = el("thead"), tr = el("tr");
+  ["Name"].concat(cfg.parent?["Lane"]:[], cfg.color?["Colour"]:[], cfg.desc?["Description"]:[],
+    cfg.key==="lanes"?["Sub-categories"]:[], ["In use",""])
+    .forEach(function(h){ tr.appendChild(el("th",null,h)); });
+  thead.appendChild(tr); tbl.appendChild(thead);
+
+  var tbody = el("tbody");
+  list.forEach(function(item, idx){
+    var row = el("tr");
+
+    row.appendChild(el("td",null,item.name));
+
+    if(cfg.parent){
+      var lane = byId(state.lanes, item.laneId);
+      var td = el("td");
+      var tag = el("span","tag", lane ? lane.name : "Unassigned");
+      td.appendChild(tag);
+      row.appendChild(td);
+    }
+    if(cfg.color){
+      var tdc = el("td");
+      var sw = el("span","swatch");
+      var i = el("i"); i.style.setProperty("--c", item.color||"#787877");
+      sw.appendChild(i);
+      sw.appendChild(el("span",null,(item.color||"").toUpperCase()));
+      tdc.appendChild(sw);
+      row.appendChild(tdc);
+    }
+    if(cfg.desc){
+      row.appendChild(el("td",null,item.desc||"—"));
+    }
+    if(cfg.key==="lanes"){
+      var tdS = el("td");
+      var lbl = el("label","checkline");
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = !!item.hasSubLanes;
+      cb.addEventListener("change", function(){
+        item.hasSubLanes = cb.checked;
+        if(!cb.checked){
+          state.entries.forEach(function(e){ if(e.laneId===item.id) e.subLaneId = null; });
+        }
+        commit("Lane updated");
+      });
+      lbl.appendChild(cb);
+      lbl.appendChild(el("span",null, item.hasSubLanes ? "Enabled" : "Off"));
+      tdS.appendChild(lbl);
+      row.appendChild(tdS);
+    }
+
+    var n = usageCount(cfg.field, item.id);
+    var tdU = el("td");
+    tdU.appendChild(el("span","usecount"+(n?"":" zero"), n ? n+(n===1?" initiative":" initiatives") : "unused"));
+    row.appendChild(tdU);
+
+    var tdA = el("td","actions");
+    if(cfg.orderable){
+      tdA.appendChild(moveBtn(cfg, idx, -1, list.length));
+      tdA.appendChild(moveBtn(cfg, idx, +1, list.length));
+    }
+    var edit = el("button","btn btn-sm btn-quiet","Edit");
+    edit.type = "button";
+    edit.addEventListener("click", function(){ openValueDialog(cfg, item.id); });
+    tdA.appendChild(edit);
+
+    var del = el("button","btn btn-sm btn-danger","Remove");
+    del.type = "button";
+    del.addEventListener("click", function(){ removeValue(cfg, item); });
+    tdA.appendChild(del);
+    row.appendChild(tdA);
+
+    tbody.appendChild(row);
+  });
+  tbl.appendChild(tbody);
+  host.appendChild(tbl);
+}
+
+function moveBtn(cfg, idx, dir, len){
+  var b = el("button","btn btn-sm btn-quiet btn-icon", dir<0 ? "↑" : "↓");
+  b.type = "button";
+  b.title = dir<0 ? "Move up" : "Move down";
+  b.disabled = (dir<0 && idx===0) || (dir>0 && idx===len-1);
+  if(b.disabled) b.style.opacity = ".3";
+  b.addEventListener("click", function(){
+    var list = state[cfg.key];
+    var t = idx+dir;
+    if(t<0 || t>=list.length) return;
+    var tmp = list[idx]; list[idx] = list[t]; list[t] = tmp;
+    commit("Order updated");
+  });
+  return b;
+}
+
+function removeValue(cfg, item){
+  var n = usageCount(cfg.field, item.id);
+  var extra = "";
+  if(cfg.key==="lanes"){
+    var kids = state.subLanes.filter(function(s){ return s.laneId===item.id; }).length;
+    if(kids) extra = "\n\nIts " + kids + " sub-categor" + (kids===1?"y":"ies") + " will also be removed.";
+  }
+  var msg = "Remove “" + item.name + "”?";
+  if(n) msg += "\n\n" + n + " initiative" + (n===1?" is":"s are") +
+               " using it. They will be kept and left unassigned.";
+  msg += extra;
+  if(!window.confirm(msg)) return;
+
+  state[cfg.key] = state[cfg.key].filter(function(x){ return x.id!==item.id; });
+  state.entries.forEach(function(e){ if(e[cfg.field]===item.id) e[cfg.field] = null; });
+  if(cfg.key==="lanes"){
+    var removed = state.subLanes.filter(function(s){ return s.laneId===item.id; }).map(function(s){ return s.id; });
+    state.subLanes = state.subLanes.filter(function(s){ return s.laneId!==item.id; });
+    state.entries.forEach(function(e){
+      if(removed.indexOf(e.subLaneId)>=0) e.subLaneId = null;
+    });
+  }
+  commit(item.name + " removed");
+}
+
+function renderTimelinePanel(host){
+  host.appendChild(el("h2",null,"Timeline horizon"));
+  host.appendChild(el("p","lede","The span of years drawn on both timelines. Quarters are the planning unit. Extending the horizon adds columns; shortening it keeps every initiative but hides the parts that fall outside."));
+
+  var outside = state.entries.filter(function(e){
+    var s = colIndex(e.sy,e.sq), en = e.milestone ? s : colIndex(e.ey,e.eq);
+    return en < 0 || s > colCount()-1;
+  });
+  if(outside.length){
+    var note = el("div","notecard");
+    note.appendChild(el("strong",null,"Outside the current horizon"));
+    note.appendChild(el("span",null, outside.length + " initiative" + (outside.length===1?" falls":"s fall") +
+      " entirely outside " + state.config.startYear + "–" + state.config.endYear +
+      " and are not drawn. Widen the horizon to bring them back."));
+    host.appendChild(note);
+  }
+
+  var grid = el("div","formgrid");
+  grid.style.maxWidth = "560px";
+
+  var f1 = el("div","field");
+  f1.appendChild(el("label",null,"First year"));
+  var i1 = document.createElement("input");
+  i1.className = "control"; i1.type = "number"; i1.min = "2000"; i1.max = "2100"; i1.step = "1";
+  i1.value = state.config.startYear;
+  f1.appendChild(i1); grid.appendChild(f1);
+
+  var f2 = el("div","field");
+  f2.appendChild(el("label",null,"Last year"));
+  var i2 = document.createElement("input");
+  i2.className = "control"; i2.type = "number"; i2.min = "2000"; i2.max = "2100"; i2.step = "1";
+  i2.value = state.config.endYear;
+  f2.appendChild(i2); grid.appendChild(f2);
+
+  var errp = el("p","err full");
+  grid.appendChild(errp);
+  host.appendChild(grid);
+
+  var actions = el("div","panel-head");
+  actions.style.marginTop = "18px";
+
+  var apply = el("button","btn btn-primary","Apply horizon");
+  apply.type = "button";
+  apply.addEventListener("click", function(){
+    var a = Math.round(Number(i1.value)), b = Math.round(Number(i2.value));
+    if(!isFinite(a) || !isFinite(b) || a<2000 || b>2100){
+      errp.textContent = "Years must be between 2000 and 2100."; errp.classList.add("show"); return;
+    }
+    if(b < a){ errp.textContent = "The last year cannot be before the first year."; errp.classList.add("show"); return; }
+    if(b - a > 14){ errp.textContent = "Keep the horizon to 15 years or fewer."; errp.classList.add("show"); return; }
+    errp.classList.remove("show");
+    state.config.startYear = a; state.config.endYear = b;
+    commit("Horizon set to "+a+"–"+b);
+  });
+  actions.appendChild(apply);
+
+  var addEnd = el("button","btn btn-quiet","Add "+(state.config.endYear+1));
+  addEnd.type = "button";
+  addEnd.addEventListener("click", function(){
+    state.config.endYear += 1;
+    commit(state.config.endYear + " added to the horizon");
+  });
+  actions.appendChild(addEnd);
+
+  var addStart = el("button","btn btn-quiet","Add "+(state.config.startYear-1));
+  addStart.type = "button";
+  addStart.addEventListener("click", function(){
+    state.config.startYear -= 1;
+    commit(state.config.startYear + " added to the horizon");
+  });
+  actions.appendChild(addStart);
+  host.appendChild(actions);
+}
+
+function renderEntriesPanel(host){
+  host.appendChild(el("h2",null,"All initiatives"));
+  host.appendChild(el("p","lede","Every entry in the roadmap, regardless of the filters set on the timeline views."));
+
+  var head = el("div","panel-head");
+  var wrap = el("div","grow-1 field");
+  wrap.appendChild(el("label",null,"Filter"));
+  var q = document.createElement("input");
+  q.className = "control"; q.type = "search"; q.placeholder = "Search initiatives"; q.style.width = "100%";
+  wrap.appendChild(q); head.appendChild(wrap);
+
+  var add = el("button","btn btn-primary","Add initiative");
+  add.type = "button";
+  add.addEventListener("click", function(){ openEntryDialog(null); });
+  head.appendChild(add);
+  host.appendChild(head);
+
+  var tblWrap = el("div");
+  host.appendChild(tblWrap);
+
+  function draw(){
+    tblWrap.innerHTML = "";
+    var term = q.value.trim().toLowerCase();
+    var rows = state.entries.filter(function(e){
+      return !term || (e.title+" "+(e.notes||"")).toLowerCase().indexOf(term)>=0;
+    }).slice().sort(sortEntries);
+
+    if(!rows.length){
+      tblWrap.appendChild(emptyBlock("Nothing here",
+        state.entries.length ? "No initiative matches that search." : "The roadmap is empty.",
+        state.entries.length ? null : "Add initiative",
+        function(){ openEntryDialog(null); }));
+      return;
+    }
+    var tbl = el("table","tbl");
+    var thead = el("thead"), tr = el("tr");
+    ["Initiative","Lane","Sub-category","Status","Owner","Timing",""].forEach(function(h){
+      tr.appendChild(el("th",null,h));
+    });
+    thead.appendChild(tr); tbl.appendChild(thead);
+    var tbody = el("tbody");
+    rows.forEach(function(e){
+      var r = el("tr");
+      var tdT = el("td");
+      tdT.appendChild(el("span",null,(e.spotlight?"★ ":"")+e.title));
+      r.appendChild(tdT);
+      r.appendChild(el("td",null,nameOf(state.lanes,e.laneId,"—")||"—"));
+      r.appendChild(el("td",null,nameOf(state.subLanes,e.subLaneId,"—")||"—"));
+      var st = byId(state.statuses,e.statusId);
+      var tdS = el("td");
+      if(st){
+        var sw = el("span","swatch");
+        var i = el("i"); i.style.setProperty("--c", st.color);
+        i.style.borderRadius = "50%"; i.style.width = "11px"; i.style.height = "11px";
+        sw.appendChild(i); sw.appendChild(el("span",null,st.name));
+        tdS.appendChild(sw);
+      }else tdS.textContent = "—";
+      r.appendChild(tdS);
+      r.appendChild(el("td",null,nameOf(state.owners,e.ownerId,"—")||"—"));
+      r.appendChild(el("td",null,spanLabel(e)));
+      var tdA = el("td","actions");
+      var ed = el("button","btn btn-sm btn-quiet","Edit"); ed.type="button";
+      ed.addEventListener("click", function(){ openEntryDialog(e.id); });
+      tdA.appendChild(ed);
+      var rm = el("button","btn btn-sm btn-danger","Remove"); rm.type="button";
+      rm.addEventListener("click", function(){ deleteEntry(e.id); });
+      tdA.appendChild(rm);
+      r.appendChild(tdA);
+      tbody.appendChild(r);
+    });
+    tbl.appendChild(tbody);
+    tblWrap.appendChild(tbl);
+  }
+  q.addEventListener("input", draw);
+  draw();
+}
+
+function renderDataPanel(host){
+  host.appendChild(el("h2",null,"Import / export"));
+  host.appendChild(el("p","lede","The roadmap is stored in this browser only. Export the JSON to keep a copy, share it, or move it to another machine."));
+
+  var note = el("div","notecard");
+  note.appendChild(el("strong",null,"Sample content"));
+  note.appendChild(el("span",null,"This file ships with a sample HR technology portfolio so the timelines are legible on first open. Replace it with your own data, or clear everything below."));
+  host.appendChild(note);
+
+  var grid = el("div","datagrid");
+
+  /* Export */
+  var c1 = el("div","card");
+  c1.appendChild(el("h4",null,"Export"));
+  c1.appendChild(el("p",null,"Copy the JSON below, or download it as a file."));
+  var ta = document.createElement("textarea");
+  ta.className = "control"; ta.readOnly = true;
+  ta.value = JSON.stringify(state, null, 2);
+  c1.appendChild(ta);
+  var row1 = el("div","panel-head");
+  row1.style.marginTop = "12px";
+  var copy = el("button","btn btn-quiet","Copy JSON"); copy.type="button";
+  copy.addEventListener("click", function(){
+    ta.select();
+    var ok = false;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(function(){ toast("Copied to clipboard"); },
+        function(){ toast("Select the text and copy manually"); });
+      return;
+    }
+    try{ ok = document.execCommand("copy"); }catch(err){ ok = false; }
+    toast(ok ? "Copied to clipboard" : "Select the text and copy manually");
+  });
+  row1.appendChild(copy);
+  var dl = el("button","btn btn-quiet","Download .json"); dl.type="button";
+  dl.addEventListener("click", function(){
+    try{
+      var blob = new Blob([ta.value], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "hr-technology-roadmap.json";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }catch(err){ toast("Download blocked here — copy the JSON instead"); }
+  });
+  row1.appendChild(dl);
+  c1.appendChild(row1);
+  grid.appendChild(c1);
+
+  /* Import */
+  var c2 = el("div","card");
+  c2.appendChild(el("h4",null,"Import"));
+  c2.appendChild(el("p",null,"Paste an exported payload, or choose a .json file. This replaces everything currently stored."));
+  var ta2 = document.createElement("textarea");
+  ta2.className = "control"; ta2.placeholder = "Paste exported JSON here";
+  c2.appendChild(ta2);
+  var err2 = el("p","err"); c2.appendChild(err2);
+  var row2 = el("div","panel-head");
+  row2.style.marginTop = "12px";
+  var imp = el("button","btn btn-primary","Replace data"); imp.type="button";
+  imp.addEventListener("click", function(){ doImport(ta2.value, err2); });
+  row2.appendChild(imp);
+  var file = document.createElement("input");
+  file.type = "file"; file.accept = "application/json,.json";
+  file.style.display = "none";
+  file.addEventListener("change", function(){
+    var f = file.files && file.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){ doImport(String(reader.result), err2); };
+    reader.readAsText(f);
+    file.value = "";
+  });
+  var pick = el("button","btn btn-quiet","Choose file…"); pick.type="button";
+  pick.addEventListener("click", function(){ file.click(); });
+  row2.appendChild(pick);
+  row2.appendChild(file);
+  c2.appendChild(row2);
+  grid.appendChild(c2);
+
+  /* Reset */
+  var c3 = el("div","card");
+  c3.appendChild(el("h4",null,"Reset"));
+  c3.appendChild(el("p",null,"Start again from the sample portfolio, or clear the initiatives and keep your configured lanes and values."));
+  var row3 = el("div","panel-head");
+  var r1 = el("button","btn btn-quiet","Restore sample data"); r1.type="button";
+  r1.addEventListener("click", function(){
+    if(!window.confirm("Replace everything with the sample portfolio?")) return;
+    state = seedState(); commit("Sample data restored");
+  });
+  row3.appendChild(r1);
+  var r2 = el("button","btn btn-danger","Clear all initiatives"); r2.type="button";
+  r2.addEventListener("click", function(){
+    if(!window.confirm("Remove all " + state.entries.length + " initiatives? Lanes and admin values are kept.")) return;
+    state.entries = []; commit("All initiatives removed");
+  });
+  row3.appendChild(r2);
+  c3.appendChild(row3);
+  grid.appendChild(c3);
+
+  host.appendChild(grid);
+}
+
+function doImport(text, errNode){
+  errNode.classList.remove("show");
+  var parsed;
+  try{ parsed = JSON.parse(text); }
+  catch(err){
+    errNode.textContent = "That is not valid JSON."; errNode.classList.add("show"); return;
+  }
+  if(!parsed || !Array.isArray(parsed.entries) || !Array.isArray(parsed.lanes)){
+    errNode.textContent = "That payload has no lanes or initiatives — it does not look like a roadmap export.";
+    errNode.classList.add("show"); return;
+  }
+  if(!window.confirm("Replace the current roadmap with this file?")) return;
+  normalise(parsed);
+  state = parsed;
+  ui.expanded = {};
+  commit("Roadmap imported");
+}
+
+/* ============================================================
+   9. Dialogs
+   ============================================================ */
+function fillSelect(sel, list, opts){
+  opts = opts || {};
+  sel.innerHTML = "";
+  if(opts.placeholder!=null){
+    var o = document.createElement("option");
+    o.value = ""; o.textContent = opts.placeholder;
+    sel.appendChild(o);
+  }
+  list.forEach(function(item){
+    var o = document.createElement("option");
+    o.value = item.id; o.textContent = item.name;
+    sel.appendChild(o);
+  });
+  sel.value = opts.selected!=null ? opts.selected : "";
+  if(sel.value !== (opts.selected||"")) sel.value = "";
+}
+function fillYears(sel, selected){
+  sel.innerHTML = "";
+  var ys = years();
+  /* Allow one year of slack either side so an initiative can be planned
+     just outside the drawn horizon. */
+  for(var y=ys[0]-1; y<=ys[ys.length-1]+1; y++){
+    var o = document.createElement("option");
+    o.value = String(y); o.textContent = String(y);
+    sel.appendChild(o);
+  }
+  sel.value = String(selected);
+}
+function fillQuarters(sel, selected){
+  sel.innerHTML = "";
+  QUARTERS.forEach(function(q,i){
+    var o = document.createElement("option");
+    o.value = String(i+1); o.textContent = q;
+    sel.appendChild(o);
+  });
+  sel.value = String(clampQ(selected));
+}
+
+var editingEntryId = null;
+
+function syncSubLaneField(selectedSub){
+  var lane = byId(state.lanes, $("#e-lane").value);
+  var wrap = $("#e-sublane-wrap");
+  var sel = $("#e-sublane");
+  if(lane && lane.hasSubLanes){
+    wrap.style.display = "";
+    var subs = state.subLanes.filter(function(s){ return s.laneId===lane.id; });
+    fillSelect(sel, subs, {placeholder:"— none —", selected:selectedSub||""});
+  }else{
+    wrap.style.display = "none";
+    sel.innerHTML = "";
+  }
+}
+
+function openEntryDialog(id){
+  var e = id ? byId(state.entries, id) : null;
+  editingEntryId = e ? e.id : null;
+
+  $("#dlg-entry-title").textContent = e ? "Edit initiative" : "Add initiative";
+  $("#e-delete").style.display = e ? "" : "none";
+  $("#e-err").classList.remove("show");
+
+  $("#e-title").value = e ? e.title : "";
+  fillSelect($("#e-lane"), state.lanes, {placeholder:"— select a lane —", selected:e?e.laneId:(state.lanes[0]?state.lanes[0].id:"")});
+  syncSubLaneField(e ? e.subLaneId : "");
+  fillSelect($("#e-theme"), state.themes, {placeholder:"— none —", selected:e?e.themeId:""});
+  fillSelect($("#e-owner"), state.owners, {placeholder:"— none —", selected:e?e.ownerId:""});
+  fillSelect($("#e-platform"), state.platforms, {placeholder:"— none —", selected:e?e.platformId:""});
+  fillSelect($("#e-status"), state.statuses, {placeholder:"— none —", selected:e?e.statusId:(state.statuses[0]?state.statuses[0].id:"")});
+  fillSelect($("#e-priority"), state.priorities, {placeholder:"— none —", selected:e?e.priorityId:""});
+
+  var sy = e ? e.sy : state.config.startYear;
+  var ey = e ? e.ey : state.config.startYear;
+  fillYears($("#e-start-year"), sy);
+  fillYears($("#e-end-year"), ey);
+  fillQuarters($("#e-start-q"), e ? e.sq : 1);
+  fillQuarters($("#e-end-q"), e ? e.eq : 2);
+
+  $("#e-progress").value = e ? e.progress : 0;
+  $("#e-progress-out").textContent = (e ? e.progress : 0) + "%";
+  $("#e-milestone").checked = e ? !!e.milestone : false;
+  $("#e-spotlight").checked = e ? !!e.spotlight : false;
+  $("#e-notes").value = e ? (e.notes||"") : "";
+  syncMilestoneField();
+
+  $("#dlg-entry").showModal();
+  setTimeout(function(){ $("#e-title").focus(); }, 30);
+}
+
+function syncMilestoneField(){
+  var isM = $("#e-milestone").checked;
+  $("#e-end-year").disabled = isM;
+  $("#e-end-q").disabled = isM;
+  $("#e-end-year").style.opacity = isM ? ".45" : "";
+  $("#e-end-q").style.opacity = isM ? ".45" : "";
+}
+
+function saveEntry(){
+  var errNode = $("#e-err");
+  errNode.classList.remove("show");
+
+  var title = $("#e-title").value.trim();
+  if(!title){ errNode.textContent = "Give the initiative a name."; errNode.classList.add("show"); $("#e-title").focus(); return; }
+  var laneId = $("#e-lane").value;
+  if(!laneId){ errNode.textContent = "Choose a lane."; errNode.classList.add("show"); return; }
+
+  var milestone = $("#e-milestone").checked;
+  var sy = Number($("#e-start-year").value), sq = Number($("#e-start-q").value);
+  var ey = milestone ? sy : Number($("#e-end-year").value);
+  var eq = milestone ? sq : Number($("#e-end-q").value);
+  if(!milestone && (ey*4+eq) < (sy*4+sq)){
+    errNode.textContent = "The end quarter cannot be before the start quarter.";
+    errNode.classList.add("show"); return;
+  }
+
+  var lane = byId(state.lanes, laneId);
+  var data = {
+    title: title,
+    laneId: laneId,
+    subLaneId: (lane && lane.hasSubLanes) ? ($("#e-sublane").value || null) : null,
+    themeId: $("#e-theme").value || null,
+    ownerId: $("#e-owner").value || null,
+    platformId: $("#e-platform").value || null,
+    statusId: $("#e-status").value || null,
+    priorityId: $("#e-priority").value || null,
+    sy:sy, sq:sq, ey:ey, eq:eq,
+    progress: Number($("#e-progress").value)||0,
+    milestone: milestone,
+    spotlight: $("#e-spotlight").checked,
+    notes: $("#e-notes").value.trim()
+  };
+
+  if(editingEntryId){
+    var e = byId(state.entries, editingEntryId);
+    if(e) Object.keys(data).forEach(function(k){ e[k] = data[k]; });
+  }else{
+    data.id = uid("en");
+    state.entries.push(data);
+  }
+  $("#dlg-entry").close();
+  commit(editingEntryId ? "Initiative updated" : "Initiative added");
+}
+
+function deleteEntry(id){
+  var e = byId(state.entries, id);
+  if(!e) return;
+  if(!window.confirm("Remove “"+e.title+"” from the roadmap?")) return;
+  state.entries = state.entries.filter(function(x){ return x.id!==id; });
+  if($("#dlg-entry").open) $("#dlg-entry").close();
+  commit("Initiative removed");
+}
+
+/* ---- Generic admin value dialog ---- */
+var editingValue = {cfg:null, id:null};
+
+function openValueDialog(cfg, id){
+  var item = id ? byId(state[cfg.key], id) : null;
+  editingValue = {cfg:cfg, id:id};
+
+  $("#dlg-value-title").textContent = (item ? "Edit " : "Add ") + cfg.singular;
+  $("#v-err").classList.remove("show");
+  $("#v-name").value = item ? item.name : "";
+
+  $("#v-parent-wrap").style.display = cfg.parent ? "" : "none";
+  if(cfg.parent){
+    var lanesWithSubs = state.lanes.filter(function(l){ return l.hasSubLanes; });
+    fillSelect($("#v-parent"), lanesWithSubs, {
+      placeholder: lanesWithSubs.length ? null : "— no lane has sub-categories enabled —",
+      selected: item ? item.laneId : (lanesWithSubs[0] ? lanesWithSubs[0].id : "")
+    });
+  }
+
+  $("#v-color-wrap").style.display = cfg.color ? "" : "none";
+  if(cfg.color){
+    var hex = item && item.color ? item.color : "#787877";
+    $("#v-color").value = hex;
+    $("#v-color-hex").value = hex.toUpperCase();
+    renderSwatches(hex);
+  }
+
+  $("#v-desc-wrap").style.display = cfg.desc ? "" : "none";
+  if(cfg.desc) $("#v-desc").value = item ? (item.desc||"") : "";
+
+  $("#dlg-value").showModal();
+  setTimeout(function(){ $("#v-name").focus(); }, 30);
+}
+
+function renderSwatches(current){
+  var host = $("#v-swatches");
+  host.innerHTML = "";
+  PALETTE.forEach(function(p){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.style.background = p.hex;
+    b.title = p.name + " " + p.hex;
+    b.setAttribute("aria-label", p.name);
+    b.setAttribute("aria-pressed", p.hex.toLowerCase()===String(current).toLowerCase() ? "true":"false");
+    b.addEventListener("click", function(){
+      $("#v-color").value = p.hex;
+      $("#v-color-hex").value = p.hex;
+      renderSwatches(p.hex);
+    });
+    host.appendChild(b);
+  });
+}
+
+function saveValue(){
+  var cfg = editingValue.cfg, errNode = $("#v-err");
+  if(!cfg) return;
+  errNode.classList.remove("show");
+
+  var name = $("#v-name").value.trim();
+  if(!name){ errNode.textContent = "Give it a name."; errNode.classList.add("show"); return; }
+
+  var dup = state[cfg.key].filter(function(x){
+    return x.id!==editingValue.id && x.name.toLowerCase()===name.toLowerCase();
+  });
+  if(dup.length){ errNode.textContent = "That name is already used."; errNode.classList.add("show"); return; }
+
+  var laneId = null;
+  if(cfg.parent){
+    laneId = $("#v-parent").value;
+    if(!laneId){
+      errNode.textContent = "Enable sub-categories on a lane first, then assign this one to it.";
+      errNode.classList.add("show"); return;
+    }
+  }
+
+  var hex = null;
+  if(cfg.color){
+    hex = String($("#v-color-hex").value || $("#v-color").value).trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(hex)){
+      errNode.textContent = "Colour must be a 6-digit hex value, e.g. #DA291C.";
+      errNode.classList.add("show"); return;
+    }
+    hex = hex.toUpperCase();
+  }
+
+  var item = editingValue.id ? byId(state[cfg.key], editingValue.id) : null;
+  if(!item){
+    item = {id: uid(cfg.key.slice(0,2))};
+    state[cfg.key].push(item);
+  }
+  item.name = name;
+  if(cfg.parent) item.laneId = laneId;
+  if(cfg.color)  item.color = hex;
+  if(cfg.desc)   item.desc = $("#v-desc").value.trim();
+  if(cfg.key==="lanes" && item.hasSubLanes===undefined) item.hasSubLanes = false;
+
+  $("#dlg-value").close();
+  commit(editingValue.id ? name+" updated" : name+" added");
+}
+
+/* ============================================================
+   10. Render orchestration + wiring
+   ============================================================ */
+function commit(msg){
+  save();
+  renderAll();
+  if(msg) toast(msg);
+}
+
+function refreshFilterSelects(){
+  fillSelect($("#f-lane"),     state.lanes,     {placeholder:"All lanes",   selected:ui.filters.lane});
+  fillSelect($("#f-status"),   state.statuses,  {placeholder:"All statuses",selected:ui.filters.status});
+  fillSelect($("#f-owner"),    state.owners,    {placeholder:"All owners",  selected:ui.filters.owner});
+  fillSelect($("#f-theme"),    state.themes,    {placeholder:"All themes",  selected:ui.filters.theme});
+  fillSelect($("#f-platform"), state.platforms, {placeholder:"All systems", selected:ui.filters.platform});
+  fillSelect($("#fx-lane"),    state.lanes,     {placeholder:"All lanes",   selected:ui.execFilters.lane});
+  /* fillSelect blanks a value that no longer exists — mirror that back. */
+  ui.filters.lane     = $("#f-lane").value;
+  ui.filters.status   = $("#f-status").value;
+  ui.filters.owner    = $("#f-owner").value;
+  ui.filters.theme    = $("#f-theme").value;
+  ui.filters.platform = $("#f-platform").value;
+  ui.execFilters.lane = $("#fx-lane").value;
+}
+
+function renderAll(){
+  $("#horizonLabel").textContent = state.config.startYear + "–" + state.config.endYear;
+  refreshFilterSelects();
+  renderDetail();
+  renderExec();
+  renderAdmin();
+}
+
+function resetFilters(){
+  ui.search = "";
+  ui.filters = {lane:"",status:"",owner:"",theme:"",platform:"",execOnly:false};
+  $("#f-search").value = "";
+  $("#f-exec").checked = false;
+  renderAll();
+}
+
+var VIEWS = {detail:1, exec:1, admin:1};
+
+function setView(v, fromHash){
+  if(!VIEWS[v]) v = "detail";
+  ui.view = v;
+  if(!fromHash && location.hash !== "#"+v){
+    try{ history.replaceState(null,"","#"+v); }catch(err){ location.hash = v; }
+  }
+  $$(".tab").forEach(function(t){ t.setAttribute("aria-selected", t.dataset.view===v ? "true":"false"); });
+  $$(".view").forEach(function(s){ s.classList.toggle("is-active", s.id==="view-"+v); });
+}
+
+function wire(){
+  $$(".tab").forEach(function(t){
+    t.addEventListener("click", function(){ setView(t.dataset.view); });
+  });
+  window.addEventListener("hashchange", function(){
+    setView(String(location.hash).replace("#",""), true);
+  });
+
+  $("#f-search").addEventListener("input", function(){ ui.search = this.value.trim(); renderDetail(); });
+  $("#f-lane").addEventListener("change", function(){ ui.filters.lane = this.value; renderDetail(); });
+  $("#f-status").addEventListener("change", function(){ ui.filters.status = this.value; renderDetail(); });
+  $("#f-owner").addEventListener("change", function(){ ui.filters.owner = this.value; renderDetail(); });
+  $("#f-theme").addEventListener("change", function(){ ui.filters.theme = this.value; renderDetail(); });
+  $("#f-platform").addEventListener("change", function(){ ui.filters.platform = this.value; renderDetail(); });
+  $("#f-exec").addEventListener("change", function(){ ui.filters.execOnly = this.checked; renderDetail(); });
+  $("#btn-clear-filters").addEventListener("click", resetFilters);
+  $("#btn-add").addEventListener("click", function(){ openEntryDialog(null); });
+
+  $$("#view-detail .segmented button").forEach(function(b){
+    b.addEventListener("click", function(){
+      ui.zoom = Number(b.dataset.zoom);
+      $$("#view-detail .segmented button").forEach(function(x){
+        x.setAttribute("aria-pressed", x===b ? "true":"false");
+      });
+      renderDetail(); renderExec();
+    });
+  });
+
+  $$("#view-exec .segmented button").forEach(function(b){
+    b.addEventListener("click", function(){
+      ui.rollup = b.dataset.rollup;
+      ui.expanded = {};
+      $$("#view-exec .segmented button").forEach(function(x){
+        x.setAttribute("aria-pressed", x===b ? "true":"false");
+      });
+      renderExec();
+    });
+  });
+  $("#fx-lane").addEventListener("change", function(){ ui.execFilters.lane = this.value; renderExec(); });
+  $("#fx-exec").addEventListener("change", function(){ ui.execFilters.execOnly = this.checked; renderExec(); });
+  $("#btn-collapse-all").addEventListener("click", function(){ ui.expanded = {}; renderExec(); });
+  $("#btn-expand-all").addEventListener("click", function(){
+    var keys = collectBandKeys();
+    keys.forEach(function(k){ ui.expanded[k] = true; });
+    renderExec();
+  });
+  $("#btn-print").addEventListener("click", function(){ window.print(); });
+
+  $$("#view-admin .admin-nav button").forEach(function(b){
+    b.addEventListener("click", function(){ ui.adminPanel = b.dataset.panel; renderAdmin(); });
+  });
+
+  /* Entry dialog */
+  $("#e-lane").addEventListener("change", function(){ syncSubLaneField(""); });
+  $("#e-milestone").addEventListener("change", syncMilestoneField);
+  $("#e-progress").addEventListener("input", function(){ $("#e-progress-out").textContent = this.value+"%"; });
+  $("#e-save").addEventListener("click", saveEntry);
+  $("#e-delete").addEventListener("click", function(){ if(editingEntryId) deleteEntry(editingEntryId); });
+  $("#form-entry").addEventListener("submit", function(ev){ ev.preventDefault(); saveEntry(); });
+
+  /* Value dialog */
+  $("#v-save").addEventListener("click", saveValue);
+  $("#form-value").addEventListener("submit", function(ev){ ev.preventDefault(); saveValue(); });
+  $("#v-color").addEventListener("input", function(){
+    $("#v-color-hex").value = this.value.toUpperCase();
+    renderSwatches(this.value);
+  });
+  $("#v-color-hex").addEventListener("input", function(){
+    var v = this.value.trim();
+    if(/^#[0-9a-fA-F]{6}$/.test(v)){ $("#v-color").value = v; renderSwatches(v); }
+  });
+
+  $$("[data-close]").forEach(function(b){
+    b.addEventListener("click", function(){ b.closest("dialog").close(); });
+  });
+
+  document.addEventListener("keydown", function(ev){
+    if(ev.key==="n" && (ev.metaKey||ev.ctrlKey) && !ev.shiftKey){
+      ev.preventDefault(); openEntryDialog(null);
+    }
+  });
+}
+
+/* Band keys must match the ones renderExec builds. */
+function collectBandKeys(){
+  var items = execEntries(), keys = [];
+  state.lanes.forEach(function(lane){
+    var inLane = items.filter(function(e){ return e.laneId===lane.id; });
+    if(!inLane.length) return;
+    if(ui.rollup==="lane"){
+      if(lane.hasSubLanes){
+        var used = {};
+        state.subLanes.filter(function(s){ return s.laneId===lane.id; }).forEach(function(sub){
+          var mem = inLane.filter(function(e){ return e.subLaneId===sub.id; });
+          if(!mem.length) return;
+          mem.forEach(function(e){ used[e.id]=true; });
+          keys.push("lane:"+lane.id+":"+sub.id);
+        });
+        if(inLane.filter(function(e){ return !used[e.id]; }).length) keys.push("lane:"+lane.id+":none");
+      }else{
+        keys.push("lane:"+lane.id);
+      }
+    }else{
+      rollupGroups(inLane).forEach(function(g){ keys.push(ui.rollup+":"+lane.id+":"+g.id); });
+    }
+  });
+  if(items.filter(function(e){ return !byId(state.lanes, e.laneId); }).length) keys.push("orphan");
+  return keys;
+}
+
+/* ============================================================
+   11. Boot
+   ============================================================ */
+state = load() || seedState();
+normalise(state);
+wire();
+renderAll();
+setView(String(location.hash).replace("#","") || "detail", true);
+save();
+
+})();
+</script>
+</body>
+</html>
