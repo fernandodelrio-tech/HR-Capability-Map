@@ -283,8 +283,17 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 }
 .glane-label{
   position:sticky;left:0;z-index:4;background:var(--surface-soft);
-  display:flex;align-items:center;gap:11px;padding:13px 16px 11px 16px;
+  display:flex;align-items:center;gap:9px;padding:13px 16px 11px 8px;
+  cursor:pointer;
 }
+.glane-label:hover{background:var(--surface-warm)}
+/* Collapsed groups stay in the DOM and are only hidden, so a drag can
+   spring one open without a re-render tearing out the row being dragged. */
+.grow[hidden],.gsub[hidden]{display:none!important}
+.glane[data-collapsed] .glane-label{background:var(--surface-warm)}
+.glane:not([data-collapsed]) .gbar.summary,
+.gsub:not([data-collapsed]) .gbar.summary{display:none}
+.glane-track,.gsub-track{align-items:center;padding:5px 0}
 .glane-label::before{
   content:"";width:10px;height:10px;border-radius:3px;flex:0 0 auto;
   background:var(--lane,var(--ink));
@@ -302,9 +311,14 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 }
 .gsub-label{
   position:sticky;left:0;z-index:4;background:var(--surface);
-  display:flex;align-items:center;gap:8px;padding:8px 16px 4px 34px;
+  display:flex;align-items:center;gap:7px;padding:7px 16px 5px 24px;
   font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+  cursor:pointer;
 }
+.gsub-label:hover{background:var(--surface-sunk)}
+.gsub[data-collapsed] .gsub-label{background:var(--surface-sunk)}
+.glane-label .disclose,.gsub-label .disclose{margin:0}
+.glane-count{transition:none}
 .gsub-label::before{content:"";width:7px;height:7px;border-radius:var(--r-pill);background:var(--lane,var(--gray));flex:0 0 auto}
 .gsub-track{background:var(--surface);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 
@@ -707,6 +721,10 @@ form:not(.is-view) .view-only{display:none}
             <button data-zoom="104" type="button">L</button>
           </div>
         </div>
+        <button class="btn btn-quiet btn-icon" id="btn-collapse-lanes" type="button"
+                aria-label="Collapse all lanes" title="Collapse every lane">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l8-5 8 5"/><path d="M4 15l8 5 8-5"/></svg>
+        </button>
         <button class="btn btn-quiet" id="btn-clear-filters" type="button">Reset filters</button>
         <button class="btn btn-primary" id="btn-add" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -1141,6 +1159,7 @@ var ui = {
   zoom:72,
   search:"",
   labelW:LABEL_W_DEFAULT,
+  collapsed:{},
   filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
@@ -1151,7 +1170,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1160,6 +1179,7 @@ function loadView(){
     if(!v) return;
     if(isFinite(v.labelW)) ui.labelW = Math.max(LABEL_W_MIN, Math.min(LABEL_W_MAX, Math.round(v.labelW)));
     if([46,72,104].indexOf(Number(v.zoom)) >= 0) ui.zoom = Number(v.zoom);
+    if(v.collapsed && typeof v.collapsed === "object") ui.collapsed = v.collapsed;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
@@ -1342,6 +1362,71 @@ function countKind(list, kind){
   return list.filter(function(e){ return kindOf(e) === kind; }).length;
 }
 
+/* ---- Collapsing a lane or sub-category ----
+   Which groups are folded is a per-person view preference, not roadmap
+   data, so it rides in the view store rather than the export. */
+function laneKey(laneId){ return "L:" + laneId; }
+function subKey(laneId, subId){ return "S:" + laneId + ":" + (subId || "none"); }
+function isCollapsed(key){ return !!ui.collapsed[key]; }
+function setCollapsed(key, on){
+  if(on) ui.collapsed[key] = true; else delete ui.collapsed[key];
+}
+function toggleCollapsed(key){
+  setCollapsed(key, !isCollapsed(key));
+  saveView();
+  applyCollapse();
+}
+
+/* Every row is rendered; collapsing only hides it. That keeps the collapse
+   toggle instant and lets a drag spring a group open without a re-render
+   destroying the row being dragged. */
+function applyCollapse(){
+  var body = $("#detail-gantt .gbody");
+  if(!body) return;
+  var laneOff = false, subOff = false;
+  Array.prototype.slice.call(body.children).forEach(function(node){
+    if(node.classList.contains("glane")){
+      var lane = node.getAttribute("data-lane");
+      laneOff = lane ? isCollapsed(laneKey(lane)) : false;
+      subOff = false;
+      markGroup(node, laneOff);
+    }else if(node.classList.contains("gsub")){
+      var k = node.getAttribute("data-key");
+      subOff = k ? isCollapsed(k) : false;
+      node.hidden = laneOff;
+      markGroup(node, subOff);
+    }else if(node.classList.contains("grow")){
+      node.hidden = laneOff || subOff;
+    }
+  });
+}
+function markGroup(node, collapsed){
+  node.toggleAttribute("data-collapsed", collapsed);
+  var btn = node.querySelector(".disclose");
+  if(btn) btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+}
+
+/* Collapse-all when anything is open, expand-all once everything is shut. */
+function anyExpanded(){
+  return state.lanes.some(function(l){ return !isCollapsed(laneKey(l.id)); });
+}
+function toggleAllLanes(){
+  var collapse = anyExpanded();
+  state.lanes.forEach(function(l){ setCollapsed(laneKey(l.id), collapse); });
+  saveView();
+  applyCollapse();
+  syncCollapseAllButton();
+  toast(collapse ? "All lanes collapsed" : "All lanes expanded");
+}
+function syncCollapseAllButton(){
+  var b = $("#btn-collapse-lanes");
+  if(!b) return;
+  var collapse = anyExpanded();
+  b.setAttribute("aria-label", collapse ? "Collapse all lanes" : "Expand all lanes");
+  b.title = collapse ? "Collapse every lane" : "Expand every lane";
+  b.setAttribute("aria-pressed", collapse ? "false" : "true");
+}
+
 /* ---- Timeline maths ---- */
 function years(){
   var out = [];
@@ -1488,28 +1573,79 @@ function todayMarker(){
   return m;
 }
 
-function laneRow(lane, count){
+function laneRow(lane, count, opts){
+  opts = opts || {};
   var row = el("div","glane");
   if(lane.id) row.setAttribute("data-lane", lane.id);
   if(lane.hasSubLanes) row.setAttribute("data-haskids", "1");
   var lab = el("div","glane-label");
   lab.style.setProperty("--lane", lane.color);
+
+  if(opts.key){
+    row.setAttribute("data-key", opts.key);
+    lab.appendChild(chevron(opts.key, lane.name));
+    lab.addEventListener("click", function(){ toggleCollapsed(opts.key); syncCollapseAllButton(); });
+  }
   lab.appendChild(el("h3", null, lane.name));
   if(count!=null) lab.appendChild(el("span","glane-count", String(count)));
   row.appendChild(lab);
-  row.appendChild(makeTrack("glane-track"));
+
+  var track = makeTrack("glane-track");
+  if(opts.entries && opts.entries.length) summaryBar(track, opts.entries, lane.color, opts.key);
+  row.appendChild(track);
   return row;
 }
-function subRow(sub, laneId){
+
+function subRow(sub, laneId, opts){
+  opts = opts || {};
   var row = el("div","gsub");
   if(laneId) row.setAttribute("data-lane", laneId);
-  if(sub.id) row.setAttribute("data-sub", sub.id);
-  else row.setAttribute("data-sub", "");
-  var lab = el("div","gsub-label", sub.name);
+  row.setAttribute("data-sub", sub.id || "");
+  var lab = el("div","gsub-label");
+
+  if(opts.key){
+    row.setAttribute("data-key", opts.key);
+    lab.appendChild(chevron(opts.key, sub.name));
+    lab.addEventListener("click", function(){ toggleCollapsed(opts.key); });
+  }
+  lab.appendChild(el("span",null,sub.name));
   lab.style.setProperty("--lane", sub.color);
   row.appendChild(lab);
-  row.appendChild(makeTrack("gsub-track"));
+
+  var track = makeTrack("gsub-track");
+  if(opts.entries && opts.entries.length) summaryBar(track, opts.entries, sub.color, opts.key);
+  row.appendChild(track);
   return row;
+}
+
+function chevron(key, name){
+  var btn = el("button","disclose");
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Collapse or expand " + name);
+  btn.setAttribute("aria-expanded", isCollapsed(key) ? "false" : "true");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+  return btn;
+}
+
+/* What a collapsed group shows instead of its rows: the span it covers and
+   how many initiatives are folded inside. Hidden by CSS while expanded. */
+function summaryBar(track, entries, color, key){
+  var agg = aggregate(entries);
+  var bar = placeBar(track, agg.start, agg.end, {
+    color: color,
+    label: "",
+    count: entries.length,
+    progress: agg.progress,
+    extraClass: "rollup summary" + (agg.atRisk ? " at-risk" : ""),
+    title: entries.length + " initiative" + (entries.length===1?"":"s") + " folded away"
+  });
+  if(bar && key){
+    bar.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      toggleCollapsed(key);
+      syncCollapseAllButton();
+    });
+  }
 }
 
 function emptyBlock(title, msg, actionLabel, action){
@@ -1709,21 +1845,22 @@ function renderDetail(){
   state.lanes.forEach(function(lane){
     var inLane = visible.filter(function(e){ return e.laneId===lane.id; });
     if(!inLane.length) return;
-    body.appendChild(laneRow(lane, inLane.length));
+    body.appendChild(laneRow(lane, inLane.length, {key:laneKey(lane.id), entries:inLane}));
 
     if(lane.hasSubLanes){
       var subs = state.subLanes.filter(function(s){ return s.laneId===lane.id; });
       subs.forEach(function(sub){
         var inSub = inLane.filter(function(e){ return e.subLaneId===sub.id; }).sort(sortEntries);
         if(!inSub.length) return;
-        body.appendChild(subRow(sub, lane.id));
+        body.appendChild(subRow(sub, lane.id, {key:subKey(lane.id, sub.id), entries:inSub}));
         inSub.forEach(function(e){ body.appendChild(entryRow(e)); });
       });
       var orphans = inLane.filter(function(e){
         return !e.subLaneId || !byId(state.subLanes, e.subLaneId);
       }).sort(sortEntries);
       if(orphans.length){
-        body.appendChild(subRow({name:"Unassigned", color:"#A9A8A6"}, lane.id));
+        body.appendChild(subRow({name:"Unassigned", color:"#A9A8A6"}, lane.id,
+                                {key:subKey(lane.id, null), entries:orphans}));
         orphans.forEach(function(e){ body.appendChild(entryRow(e)); });
       }
     }else{
@@ -1741,6 +1878,8 @@ function renderDetail(){
   var marker = todayMarker();
   if(marker) body.appendChild(marker);
   host.appendChild(body);
+  applyCollapse();
+  syncCollapseAllButton();
   renderLegend($("#detail-legend"));
 }
 
@@ -1789,6 +1928,11 @@ function renderLegend(host){
     g4.appendChild(el("span","item","Grip at the left of a row moves it between lanes"));
     g4.appendChild(el("span","item","Bar moves it in time; its ends change the duration"));
     host.appendChild(g4);
+
+    var g5 = el("div","grp");
+    g5.appendChild(el("strong",null,"Fold"));
+    g5.appendChild(el("span","item","Click a lane or sub-category header to collapse it"));
+    host.appendChild(g5);
   }
 }
 
@@ -1824,6 +1968,7 @@ function buildDropTargets(dragId){
   if(!body) return [];
   var targets = [], lane = null, sub = null, laneHasKids = false;
   Array.prototype.slice.call(body.children).forEach(function(node){
+    if(node.hidden) return;              /* folded away - not a drop target */
     var r = node.getBoundingClientRect();
     if(node.classList.contains("glane")){
       lane = node.getAttribute("data-lane");
@@ -1862,7 +2007,9 @@ function startRowDrag(ev, entry, rowEl, grip){
     target: null,
     line: line,
     startY: ev.clientY,
-    moved: false
+    moved: false,
+    spring: null,
+    springAt: 0
   };
   rowEl.classList.add("row-dragging");
   document.body.classList.add("row-dragging");
@@ -1886,8 +2033,29 @@ function startRowDrag(ev, entry, rowEl, grip){
     var box = scroller.getBoundingClientRect();
     if(e.clientY < box.top + 48) scroller.scrollTop -= 12;
     else if(e.clientY > box.bottom - 48) scroller.scrollTop += 12;
+    springLoad(e);
     rowDrag.targets = buildDropTargets(entry.id);
     place(e.clientY);
+  }
+
+  /* Hovering a collapsed group opens it, so a folded lane is never a dead
+     end mid-drag. Safe to do here because collapsing only toggles
+     visibility - the row being dragged is never re-rendered. */
+  function springLoad(e){
+    var over = document.elementFromPoint(e.clientX, e.clientY);
+    var head = (over && over.closest) ? over.closest("#detail-gantt [data-collapsed][data-key]") : null;
+    if(head !== rowDrag.spring){
+      rowDrag.spring = head;
+      rowDrag.springAt = Date.now();
+      return;
+    }
+    if(head && Date.now() - rowDrag.springAt > 450){
+      rowDrag.spring = null;
+      setCollapsed(head.getAttribute("data-key"), false);
+      saveView();
+      applyCollapse();
+      syncCollapseAllButton();
+    }
   }
   function up(){
     grip.removeEventListener("pointermove", move);
@@ -1925,6 +2093,11 @@ function dropEntry(entry, target){
   group.splice(at, 0, entry);
   group.forEach(function(e,i){ e.order = i; });
   if(fromLane !== toLane || fromSub !== toSub) renumber(fromLane, fromSub);
+
+  /* Never drop a row into something the user cannot see. */
+  setCollapsed(laneKey(toLane), false);
+  setCollapsed(subKey(toLane, toSub), false);
+  saveView();
 
   var where = lane.name + (toSub ? " · " + nameOf(state.subLanes, toSub) : "");
   commit("Moved to " + where, {undo:true});
@@ -3236,6 +3409,7 @@ function wire(){
   });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
   $("#btn-reflow").addEventListener("click", reflowByDate);
+  $("#btn-collapse-lanes").addEventListener("click", toggleAllLanes);
   $("#toast-undo").addEventListener("click", function(){
     $("#toast").classList.remove("show");
     undo();
