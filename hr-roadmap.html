@@ -685,6 +685,17 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
   </form>
 </dialog>
 
+<!-- ============ CONFIRM DIALOG ============ -->
+<dialog id="dlg-confirm">
+  <div class="dlg-head"><h3 id="c-title">Confirm</h3></div>
+  <div class="dlg-body"><p id="c-msg" style="white-space:pre-line;margin:0;max-width:62ch"></p></div>
+  <div class="dlg-foot">
+    <span class="spacer"></span>
+    <button class="btn btn-quiet" type="button" id="c-cancel">Cancel</button>
+    <button class="btn btn-danger" type="button" id="c-ok">Remove</button>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -838,6 +849,20 @@ function seedState(){
    3. State + storage
    ============================================================ */
 var state = null;
+
+/* When this page runs inside a host frame that brokers file saves, use it.
+   Opened as a plain file, the anchor download below works on its own. */
+var inHostFrame = !!(window.claude && typeof window.claude.use === "function");
+var hostDownloads = null;
+if(inHostFrame){
+  try{
+    window.claude.use("downloads").then(
+      function(d){ hostDownloads = d || null; },
+      function(){ hostDownloads = null; }
+    );
+  }catch(err){ hostDownloads = null; }
+}
+
 var ui = {
   view:"detail",
   zoom:72,
@@ -920,6 +945,18 @@ function readableOn(hex){
   var L = 0.2126*ch[0] + 0.7152*ch[1] + 0.0722*ch[2];
   return L > 0.42 ? "#000000" : "#FFFFFF";
 }
+/* In-app confirmation. A sandboxed frame can suppress window.confirm(),
+   which would silently swallow a removal, so the app owns this dialog. */
+var confirmCb = null;
+function ask(title, msg, okLabel, cb){
+  $("#c-title").textContent = title;
+  $("#c-msg").textContent = msg;
+  $("#c-ok").textContent = okLabel || "Confirm";
+  confirmCb = cb;
+  $("#dlg-confirm").showModal();
+  setTimeout(function(){ $("#c-ok").focus(); }, 30);
+}
+
 var toastTimer = null;
 function toast(msg){
   var t = $("#toast");
@@ -1634,24 +1671,26 @@ function removeValue(cfg, item){
   var extra = "";
   if(cfg.key==="lanes"){
     var kids = state.subLanes.filter(function(s){ return s.laneId===item.id; }).length;
-    if(kids) extra = "\n\nIts " + kids + " sub-categor" + (kids===1?"y":"ies") + " will also be removed.";
+    if(kids) extra = (extra?"\n\n":"") + "Its " + kids + " sub-categor" + (kids===1?"y":"ies") + " will also be removed.";
   }
-  var msg = "Remove “" + item.name + "”?";
-  if(n) msg += "\n\n" + n + " initiative" + (n===1?" is":"s are") +
+  var msg = "";
+  if(n) msg += n + " initiative" + (n===1?" is":"s are") +
                " using it. They will be kept and left unassigned.";
   msg += extra;
-  if(!window.confirm(msg)) return;
+  if(!msg) msg = "Nothing is using it, so nothing else changes.";
 
-  state[cfg.key] = state[cfg.key].filter(function(x){ return x.id!==item.id; });
-  state.entries.forEach(function(e){ if(e[cfg.field]===item.id) e[cfg.field] = null; });
-  if(cfg.key==="lanes"){
-    var removed = state.subLanes.filter(function(s){ return s.laneId===item.id; }).map(function(s){ return s.id; });
-    state.subLanes = state.subLanes.filter(function(s){ return s.laneId!==item.id; });
-    state.entries.forEach(function(e){
-      if(removed.indexOf(e.subLaneId)>=0) e.subLaneId = null;
-    });
-  }
-  commit(item.name + " removed");
+  ask("Remove “" + item.name + "”?", msg.replace(/^\n+/,""), "Remove", function(){
+    state[cfg.key] = state[cfg.key].filter(function(x){ return x.id!==item.id; });
+    state.entries.forEach(function(e){ if(e[cfg.field]===item.id) e[cfg.field] = null; });
+    if(cfg.key==="lanes"){
+      var removed = state.subLanes.filter(function(s){ return s.laneId===item.id; }).map(function(s){ return s.id; });
+      state.subLanes = state.subLanes.filter(function(s){ return s.laneId!==item.id; });
+      state.entries.forEach(function(e){
+        if(removed.indexOf(e.subLaneId)>=0) e.subLaneId = null;
+      });
+    }
+    commit(item.name + " removed");
+  });
 }
 
 function renderTimelinePanel(host){
@@ -1841,6 +1880,20 @@ function renderDataPanel(host){
   row1.appendChild(copy);
   var dl = el("button","btn btn-quiet","Download .json"); dl.type="button";
   dl.addEventListener("click", function(){
+    if(hostDownloads){
+      hostDownloads.save({filename:"hr-technology-roadmap.json", data:ta.value}).then(
+        function(){ toast("Roadmap file saved"); },
+        function(e){
+          toast(e && e.code === "declined" ? "Download cancelled"
+                                           : "Download unavailable here — copy the JSON instead");
+        }
+      );
+      return;
+    }
+    if(inHostFrame){
+      toast("Downloads are off in this view — copy the JSON instead");
+      return;
+    }
     try{
       var blob = new Blob([ta.value], {type:"application/json"});
       var a = document.createElement("a");
@@ -1892,14 +1945,16 @@ function renderDataPanel(host){
   var row3 = el("div","panel-head");
   var r1 = el("button","btn btn-quiet","Restore sample data"); r1.type="button";
   r1.addEventListener("click", function(){
-    if(!window.confirm("Replace everything with the sample portfolio?")) return;
-    state = seedState(); commit("Sample data restored");
+    ask("Restore the sample portfolio?", "Everything currently stored - initiatives, lanes and admin values - is replaced.", "Restore", function(){
+      state = seedState(); commit("Sample data restored");
+    });
   });
   row3.appendChild(r1);
   var r2 = el("button","btn btn-danger","Clear all initiatives"); r2.type="button";
   r2.addEventListener("click", function(){
-    if(!window.confirm("Remove all " + state.entries.length + " initiatives? Lanes and admin values are kept.")) return;
-    state.entries = []; commit("All initiatives removed");
+    ask("Remove all " + state.entries.length + " initiatives?", "Lanes, sub-categories and admin values are kept.", "Remove all", function(){
+      state.entries = []; commit("All initiatives removed");
+    });
   });
   row3.appendChild(r2);
   c3.appendChild(row3);
@@ -1919,11 +1974,14 @@ function doImport(text, errNode){
     errNode.textContent = "That payload has no lanes or initiatives — it does not look like a roadmap export.";
     errNode.classList.add("show"); return;
   }
-  if(!window.confirm("Replace the current roadmap with this file?")) return;
-  normalise(parsed);
-  state = parsed;
-  ui.expanded = {};
-  commit("Roadmap imported");
+  ask("Replace the current roadmap?", "The imported file brings " + parsed.entries.length +
+      " initiative" + (parsed.entries.length===1?"":"s") + " and its own lanes and values. What is stored now is discarded.",
+      "Replace", function(){
+    normalise(parsed);
+    state = parsed;
+    ui.expanded = {};
+    commit("Roadmap imported");
+  });
 }
 
 /* ============================================================
@@ -2075,10 +2133,11 @@ function saveEntry(){
 function deleteEntry(id){
   var e = byId(state.entries, id);
   if(!e) return;
-  if(!window.confirm("Remove “"+e.title+"” from the roadmap?")) return;
-  state.entries = state.entries.filter(function(x){ return x.id!==id; });
   if($("#dlg-entry").open) $("#dlg-entry").close();
-  commit("Initiative removed");
+  ask("Remove “"+e.title+"”?", "This takes the initiative off the roadmap. It cannot be undone.", "Remove", function(){
+    state.entries = state.entries.filter(function(x){ return x.id!==id; });
+    commit("Initiative removed");
+  });
 }
 
 /* ---- Generic admin value dialog ---- */
@@ -2281,7 +2340,10 @@ function wire(){
     keys.forEach(function(k){ ui.expanded[k] = true; });
     renderExec();
   });
-  $("#btn-print").addEventListener("click", function(){ window.print(); });
+  $("#btn-print").addEventListener("click", function(){
+    try{ window.print(); }
+    catch(err){ toast("Printing is blocked here - open the file directly to print"); }
+  });
 
   $$("#view-admin .admin-nav button").forEach(function(b){
     b.addEventListener("click", function(){ ui.adminPanel = b.dataset.panel; renderAdmin(); });
@@ -2306,6 +2368,16 @@ function wire(){
     var v = this.value.trim();
     if(/^#[0-9a-fA-F]{6}$/.test(v)){ $("#v-color").value = v; renderSwatches(v); }
   });
+
+  $("#c-ok").addEventListener("click", function(){
+    var cb = confirmCb; confirmCb = null;
+    $("#dlg-confirm").close();
+    if(cb) cb();
+  });
+  $("#c-cancel").addEventListener("click", function(){
+    confirmCb = null; $("#dlg-confirm").close();
+  });
+  $("#dlg-confirm").addEventListener("close", function(){ confirmCb = null; });
 
   $$("[data-close]").forEach(function(b){
     b.addEventListener("click", function(){ b.closest("dialog").close(); });
