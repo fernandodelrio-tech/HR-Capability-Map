@@ -158,6 +158,23 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 .view{display:none;flex:1;flex-direction:column;min-width:0;min-height:0}
 .view.is-active{display:flex}
 
+/* ---------- Collapsed header ----------
+   One control folds the brand row down to a strip and takes the working
+   toolbars with it, handing that height back to the timeline. The view
+   tabs survive the fold, so nothing becomes unreachable. */
+.headertoggle{flex:0 0 auto}
+.headertoggle svg{transition:transform .18s ease}
+.app.header-slim .headertoggle svg{transform:rotate(180deg)}
+
+.app.header-slim .topbar{min-height:0;padding:4px 14px;gap:12px}
+.app.header-slim .brandslot,
+.app.header-slim .brandbar,
+.app.header-slim .apptitle span{display:none}
+.app.header-slim .apptitle{font-size:14px}
+.app.header-slim .tab{height:30px;font-size:12.5px;padding:0 13px}
+.app.header-slim .view > .toolbar,
+.app.header-slim .exec-head{display:none}
+
 /* ---------- Toolbar ---------- */
 .toolbar{
   display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;flex:0 0 auto;
@@ -735,6 +752,10 @@ form:not(.is-view) .view-only{display:none}
       <button class="tab" role="tab" id="tab-exec" aria-selected="false" aria-controls="view-exec" data-view="exec">Executive View</button>
       <button class="tab" role="tab" id="tab-admin" aria-selected="false" aria-controls="view-admin" data-view="admin">Admin Console</button>
     </nav>
+    <button class="btn btn-quiet btn-icon headertoggle" id="btn-header" type="button"
+            aria-expanded="true" aria-label="Collapse the header" title="Collapse the header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+    </button>
   </header>
 
   <main>
@@ -763,11 +784,6 @@ form:not(.is-view) .view-only{display:none}
         <button class="btn btn-quiet btn-icon" id="btn-collapse-lanes" type="button"
                 aria-label="Collapse all lanes" title="Collapse every lane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l8-5 8 5"/><path d="M4 15l8 5 8-5"/></svg>
-        </button>
-        <button class="btn btn-quiet btn-icon" id="btn-reflow" type="button"
-                aria-label="Re-sort rows by start date"
-                title="Discard the hand-set row order and sort each lane by start date">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h13M3 12h9M3 18h5"/><path d="M17 14l4 4-4 4"/><path d="M21 18h-8"/></svg>
         </button>
         <button class="btn btn-primary" id="btn-add" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -1212,6 +1228,7 @@ var ui = {
   labelW:LABEL_W_DEFAULT,
   collapsed:{},
   filtersOpen:false,
+  headerOpen:true,
   filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
@@ -1222,7 +1239,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1233,6 +1250,7 @@ function loadView(){
     if([46,72,104].indexOf(Number(v.zoom)) >= 0) ui.zoom = Number(v.zoom);
     if(v.collapsed && typeof v.collapsed === "object") ui.collapsed = v.collapsed;
     ui.filtersOpen = !!v.filtersOpen;
+    if(typeof v.headerOpen === "boolean") ui.headerOpen = v.headerOpen;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
@@ -2834,6 +2852,13 @@ function renderEntriesPanel(host){
   q.value = ui.adminEntrySearch;
   wrap.appendChild(q); head.appendChild(wrap);
 
+  var reflow = el("button","btn btn-quiet","Re-sort rows by date");
+  reflow.type = "button";
+  reflow.id = "btn-reflow";
+  reflow.title = "Discard the hand-set row order and sort each lane by start date";
+  reflow.addEventListener("click", reflowByDate);
+  head.appendChild(reflow);
+
   var add = el("button","btn btn-primary","Add initiative");
   add.type = "button";
   add.addEventListener("click", function(){ openEntryDialog(null); });
@@ -3426,6 +3451,21 @@ function refreshFilterBadge(){
   $("#btn-more-filters").classList.toggle("has-filters", n > 0);
 }
 
+/* Folding the header hands its height to the timeline. The view tabs stay
+   in the strip that is left, so no view becomes unreachable. */
+function setHeaderOpen(open){
+  ui.headerOpen = !!open;
+  var app = $(".app");
+  app.classList.toggle("header-slim", !ui.headerOpen);
+  var btn = $("#btn-header");
+  btn.setAttribute("aria-expanded", ui.headerOpen ? "true" : "false");
+  btn.setAttribute("aria-label", ui.headerOpen ? "Collapse the header" : "Expand the header");
+  btn.title = ui.headerOpen ? "Collapse the header for more timeline"
+                            : "Show the header and toolbars";
+  saveView();
+  applyMetrics();
+}
+
 function setFiltersOpen(open){
   ui.filtersOpen = !!open;
   $("#btn-more-filters").setAttribute("aria-expanded", ui.filtersOpen ? "true" : "false");
@@ -3497,8 +3537,10 @@ function wire(){
   $("#btn-more-filters").addEventListener("click", function(){
     setFiltersOpen(this.getAttribute("aria-expanded") !== "true");
   });
+  $("#btn-header").addEventListener("click", function(){
+    setHeaderOpen(this.getAttribute("aria-expanded") !== "true");
+  });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
-  $("#btn-reflow").addEventListener("click", reflowByDate);
   $("#btn-collapse-lanes").addEventListener("click", toggleAllLanes);
   $("#toast-undo").addEventListener("click", function(){
     $("#toast").classList.remove("show");
@@ -3658,6 +3700,7 @@ baseline = cloneState();
 loadView();
 wire();
 setFiltersOpen(ui.filtersOpen);
+setHeaderOpen(ui.headerOpen);
 renderAll();
 setView(String(location.hash).replace("#","") || "detail", true);
 save();
