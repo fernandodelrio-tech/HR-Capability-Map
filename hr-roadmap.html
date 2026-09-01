@@ -163,6 +163,20 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
   display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;flex:0 0 auto;
   padding:14px 20px;border-bottom:1px solid var(--outline-soft);background:var(--surface);
 }
+/* The everyday bar: one row of controls, no stacked labels. */
+.toolbar-compact{align-items:center;padding:10px 20px;gap:10px}
+.toolbar-compact .control,
+.toolbar-compact .btn,
+.toolbar-compact .segmented,
+.toolbar-compact .checkline{height:36px}
+.toolbar-compact .btn-icon{width:36px}
+.toolbar-compact .segmented{padding:3px}
+.searchwrap{position:relative;flex:1 1 240px;max-width:340px;min-width:170px}
+.searchwrap svg{
+  position:absolute;left:12px;top:50%;margin-top:-8px;width:16px;height:16px;
+  color:var(--gray);pointer-events:none;
+}
+.searchwrap .control{width:100%;min-width:0;max-width:none;padding-left:36px}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field > label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
 .control{
@@ -182,7 +196,14 @@ input.control::placeholder{color:var(--gray)}
 textarea.control:hover{background:var(--surface-sunk)}
 .search{min-width:230px}
 .toolbar-spacer{margin-left:auto}
-.toolbar-secondary{background:var(--surface-soft);padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--outline-soft)}
+.toolbar-secondary{
+  background:var(--surface-soft);padding:12px 20px;
+  border-bottom:1px solid var(--outline-soft);gap:10px 12px;
+}
+.toolbar-secondary .field > label{font-size:10px}
+.toolbar-secondary .control,.toolbar-secondary .btn{height:36px}
+/* Seven selects plus two actions have to share one row at a laptop width. */
+.toolbar-secondary .control{min-width:112px;max-width:148px}
 .toolbar-secondary[hidden]{display:none}
 .badge{
   display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
@@ -190,6 +211,8 @@ textarea.control:hover{background:var(--surface-sunk)}
   font-size:11px;font-weight:700;margin-left:2px;
 }
 .badge[hidden]{display:none}
+.btn.has-filters{border-color:var(--red);color:var(--red)}
+.btn.has-filters:hover{background:var(--surface-warm);color:var(--red)}
 .btn .chev{transition:transform .15s ease}
 .btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .checkline{
@@ -231,7 +254,10 @@ textarea.control:hover{background:var(--surface-sunk)}
 .segmented button:hover:not([aria-pressed="true"]){color:var(--ink)}
 
 /* ---------- Gantt ---------- */
-.scroller{flex:1;overflow:auto;min-height:0;background:var(--surface)}
+.scroller{
+  flex:1;overflow:auto;min-height:0;background:var(--surface);
+  scrollbar-gutter:stable;
+}
 .gantt{width:max-content;min-width:100%;padding-bottom:56px}
 
 .ghead{
@@ -714,44 +740,35 @@ form:not(.is-view) .view-only{display:none}
   <main>
     <!-- ============ DETAILED GANTT ============ -->
     <section class="view is-active" id="view-detail" role="tabpanel" aria-labelledby="tab-detail">
-      <div class="toolbar">
-        <div class="field">
-          <label for="f-search">Search</label>
-          <input class="control search" id="f-search" type="search" placeholder="Initiative, owner, system, note&hellip;" />
-        </div>
-        <div class="field">
-          <label for="f-lane">Lane</label>
-          <select class="control" id="f-lane"></select>
-        </div>
-        <div class="field">
-          <label for="f-status">Status</label>
-          <select class="control" id="f-status"></select>
-        </div>
-        <div class="field">
-          <label for="f-owner">Owner</label>
-          <select class="control" id="f-owner"></select>
+      <div class="toolbar toolbar-compact">
+        <div class="searchwrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input class="control search" id="f-search" type="search"
+                 placeholder="Search initiatives, owners, systems&hellip;" aria-label="Search initiatives" />
         </div>
         <button class="btn btn-quiet" type="button" id="btn-more-filters"
                 aria-expanded="false" aria-controls="toolbar-more">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
           Filters
           <span class="badge" id="more-count" hidden>0</span>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <label class="checkline"><input type="checkbox" id="f-exec" /> Spotlight only</label>
+        <label class="checkline"><input type="checkbox" id="f-exec" /> Spotlight</label>
         <div class="toolbar-spacer"></div>
-        <div class="field">
-          <label id="lbl-zoom">Zoom</label>
-          <div class="segmented" role="group" aria-labelledby="lbl-zoom">
-            <button data-zoom="46" type="button">S</button>
-            <button data-zoom="72" type="button" aria-pressed="true">M</button>
-            <button data-zoom="104" type="button">L</button>
-          </div>
+        <div class="segmented" role="group" aria-label="Minimum column width">
+          <button data-zoom="46" type="button" title="Narrow columns">S</button>
+          <button data-zoom="72" type="button" aria-pressed="true" title="Medium columns">M</button>
+          <button data-zoom="104" type="button" title="Wide columns">L</button>
         </div>
         <button class="btn btn-quiet btn-icon" id="btn-collapse-lanes" type="button"
                 aria-label="Collapse all lanes" title="Collapse every lane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l8-5 8 5"/><path d="M4 15l8 5 8-5"/></svg>
         </button>
-        <button class="btn btn-quiet" id="btn-clear-filters" type="button">Reset filters</button>
+        <button class="btn btn-quiet btn-icon" id="btn-reflow" type="button"
+                aria-label="Re-sort rows by start date"
+                title="Discard the hand-set row order and sort each lane by start date">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h13M3 12h9M3 18h5"/><path d="M17 14l4 4-4 4"/><path d="M21 18h-8"/></svg>
+        </button>
         <button class="btn btn-primary" id="btn-add" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           Add initiative
@@ -759,12 +776,24 @@ form:not(.is-view) .view-only{display:none}
       </div>
       <div class="toolbar toolbar-secondary" id="toolbar-more" hidden>
         <div class="field">
+          <label for="f-lane">Lane</label>
+          <select class="control" id="f-lane"></select>
+        </div>
+        <div class="field">
           <label for="f-sublane">Sub-category</label>
           <select class="control" id="f-sublane"></select>
         </div>
         <div class="field">
+          <label for="f-status">Status</label>
+          <select class="control" id="f-status"></select>
+        </div>
+        <div class="field">
           <label for="f-priority">Priority</label>
           <select class="control" id="f-priority"></select>
+        </div>
+        <div class="field">
+          <label for="f-owner">Owner</label>
+          <select class="control" id="f-owner"></select>
         </div>
         <div class="field">
           <label for="f-theme">Theme</label>
@@ -775,11 +804,7 @@ form:not(.is-view) .view-only{display:none}
           <select class="control" id="f-platform"></select>
         </div>
         <div class="toolbar-spacer"></div>
-        <button class="btn btn-quiet" type="button" id="btn-reflow"
-                title="Discard the hand-set row order and sort each lane by start date">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h13M3 12h9M3 18h5"/><path d="M17 14l4 4-4 4"/><path d="M21 18h-8"/></svg>
-          Re-sort rows by date
-        </button>
+        <button class="btn btn-quiet" type="button" id="btn-clear-filters">Reset filters</button>
       </div>
       <div class="scroller" id="detail-scroller">
         <div class="gantt" id="detail-gantt"></div>
@@ -1186,6 +1211,7 @@ var ui = {
   search:"",
   labelW:LABEL_W_DEFAULT,
   collapsed:{},
+  filtersOpen:false,
   filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
@@ -1196,7 +1222,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1206,6 +1232,7 @@ function loadView(){
     if(isFinite(v.labelW)) ui.labelW = Math.max(LABEL_W_MIN, Math.min(LABEL_W_MAX, Math.round(v.labelW)));
     if([46,72,104].indexOf(Number(v.zoom)) >= 0) ui.zoom = Number(v.zoom);
     if(v.collapsed && typeof v.collapsed === "object") ui.collapsed = v.collapsed;
+    ui.filtersOpen = !!v.filtersOpen;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
@@ -1538,15 +1565,38 @@ function setLabelWidth(px){
   ui.labelW = Math.max(LABEL_W_MIN, Math.min(LABEL_W_MAX, Math.round(px)));
   applyMetrics();
 }
-/* One place that pushes the two live measurements onto both timelines. */
+
+/* The quarters share out whatever width the pane has, so a short horizon
+   fills the view instead of trailing off into blank space. Zoom sets a
+   FLOOR rather than the width itself: once the years no longer fit, the
+   columns hold that minimum and the pane scrolls. */
+function computeColW(){
+  var cols = colCount();
+  if(!cols) return ui.zoom;
+  var sc = $(ui.view === "exec" ? "#exec-scroller" : "#detail-scroller");
+  var avail = sc ? sc.clientWidth : 0;
+  if(!avail){                                   /* the pane is hidden - ask the other one */
+    var other = $(ui.view === "exec" ? "#detail-scroller" : "#exec-scroller");
+    avail = other ? other.clientWidth : 0;
+  }
+  if(!avail) return ui.zoom;
+  /* 1px of slack so a fractional total can never provoke a scrollbar. */
+  var fit = (avail - ui.labelW - 1) / cols;
+  return Math.max(ui.zoom, Math.round(fit * 1000) / 1000);
+}
+
+/* One place that pushes the live measurements onto both timelines. */
 function applyMetrics(){
+  ui.colw = computeColW();
   ["#detail-gantt","#exec-gantt"].forEach(function(sel){
     var g = $(sel);
     if(!g) return;
     g.style.setProperty("--label-w", ui.labelW+"px");
-    g.style.setProperty("--colw", ui.zoom+"px");
+    g.style.setProperty("--colw", ui.colw+"px");
   });
 }
+/* Pixels per quarter, as actually drawn - what the drag maths needs. */
+function colWidth(){ return ui.colw || ui.zoom; }
 
 function makeTrack(cls){
   var t = el("div", cls || "gtrack");
@@ -2171,7 +2221,7 @@ function startBarDrag(ev, entry, bar, mode){
   var bodyBox = $("#detail-gantt .gbody").getBoundingClientRect();
 
   function apply(clientX){
-    var d = Math.round((clientX - startX) / ui.zoom);
+    var d = Math.round((clientX - startX) / colWidth());
     var ns = s0, ne = e0;
     if(mode === "move"){
       ns = s0 + d; ne = e0 + d;
@@ -3363,17 +3413,25 @@ function refreshFilterSelects(){
   ui.execFilters.lane = $("#fx-lane").value;
 }
 
-/* The badge is the only sign a collapsed filter is still narrowing the view. */
+/* With every select behind the toggle, the badge is what tells you the view
+   is still being narrowed. It never forces the panel open - that is the
+   reader's choice, and Reset filters sits inside it. */
 function refreshFilterBadge(){
   var f = ui.filters;
-  var n = [f.subLane, f.priority, f.theme, f.platform].filter(Boolean).length;
+  var n = [f.lane, f.subLane, f.status, f.priority, f.owner, f.theme, f.platform]
+            .filter(Boolean).length;
   var badge = $("#more-count");
   badge.textContent = String(n);
   badge.hidden = n === 0;
-  if(n && $("#btn-more-filters").getAttribute("aria-expanded") !== "true"){
-    $("#btn-more-filters").setAttribute("aria-expanded","true");
-    $("#toolbar-more").hidden = false;
-  }
+  $("#btn-more-filters").classList.toggle("has-filters", n > 0);
+}
+
+function setFiltersOpen(open){
+  ui.filtersOpen = !!open;
+  $("#btn-more-filters").setAttribute("aria-expanded", ui.filtersOpen ? "true" : "false");
+  $("#toolbar-more").hidden = !ui.filtersOpen;
+  saveView();
+  refreshFilterBadge();
 }
 
 function renderAll(){
@@ -3403,6 +3461,7 @@ function setView(v, fromHash){
   }
   $$(".tab").forEach(function(t){ t.setAttribute("aria-selected", t.dataset.view===v ? "true":"false"); });
   $$(".view").forEach(function(s){ s.classList.toggle("is-active", s.id==="view-"+v); });
+  applyMetrics();          /* the newly shown pane is the one to measure against */
 }
 
 function wire(){
@@ -3412,6 +3471,11 @@ function wire(){
   window.addEventListener("hashchange", function(){
     setView(String(location.hash).replace("#",""), true);
   });
+  var resizeTimer = null;
+  window.addEventListener("resize", function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyMetrics, 80);
+  });
 
   $("#f-search").addEventListener("input", function(){ ui.search = this.value.trim(); renderDetail(); });
   $("#f-lane").addEventListener("change", function(){
@@ -3420,19 +3484,18 @@ function wire(){
     var keep = byId(state.subLanes, ui.filters.subLane);
     if(keep && ui.filters.lane && keep.laneId !== ui.filters.lane) ui.filters.subLane = "";
     refreshFilterSelects();
+    refreshFilterBadge();
     renderDetail();
   });
   $("#f-sublane").addEventListener("change", function(){ ui.filters.subLane = this.value; refreshFilterBadge(); renderDetail(); });
-  $("#f-status").addEventListener("change", function(){ ui.filters.status = this.value; renderDetail(); });
+  $("#f-status").addEventListener("change", function(){ ui.filters.status = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-priority").addEventListener("change", function(){ ui.filters.priority = this.value; refreshFilterBadge(); renderDetail(); });
-  $("#f-owner").addEventListener("change", function(){ ui.filters.owner = this.value; renderDetail(); });
+  $("#f-owner").addEventListener("change", function(){ ui.filters.owner = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-theme").addEventListener("change", function(){ ui.filters.theme = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-platform").addEventListener("change", function(){ ui.filters.platform = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-exec").addEventListener("change", function(){ ui.filters.execOnly = this.checked; renderDetail(); });
   $("#btn-more-filters").addEventListener("click", function(){
-    var open = this.getAttribute("aria-expanded") === "true";
-    this.setAttribute("aria-expanded", open ? "false" : "true");
-    $("#toolbar-more").hidden = open;
+    setFiltersOpen(this.getAttribute("aria-expanded") !== "true");
   });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
   $("#btn-reflow").addEventListener("click", reflowByDate);
@@ -3594,6 +3657,7 @@ normalise(state);
 baseline = cloneState();
 loadView();
 wire();
+setFiltersOpen(ui.filtersOpen);
 renderAll();
 setView(String(location.hash).replace("#","") || "detail", true);
 save();
