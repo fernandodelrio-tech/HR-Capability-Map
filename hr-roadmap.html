@@ -44,7 +44,9 @@
   --font-text:"Cummins Innova Text","Cummins Innova",Aptos,Roboto,"Segoe UI",system-ui,Arial,sans-serif;
 
   /* Layout */
-  --label-w:368px;
+  --label-w:368px;      /* runtime default; the gantts override it per view */
+  --label-w-min:220px;
+  --label-w-max:680px;
   --colw:72px;
   --row-h:38px;
   --bar-h:24px;
@@ -69,7 +71,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
 /* ---------- App shell ---------- */
-.app{display:flex;flex-direction:column;min-height:100vh}
+/* The shell is exactly one viewport tall and never scrolls itself: the
+   timeline pane below is the only scrolling region, which is what lets the
+   column and period headers stay stuck while the rows move. */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 
 .topbar{
   background:var(--black);color:var(--white);
@@ -100,13 +105,13 @@ button,input,select,textarea{font:inherit;color:inherit}
   content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;background:var(--red);
 }
 
-main{flex:1;display:flex;flex-direction:column;min-width:0}
-.view{display:none;flex:1;flex-direction:column;min-width:0}
+main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+.view{display:none;flex:1;flex-direction:column;min-width:0;min-height:0}
 .view.is-active{display:flex}
 
 /* ---------- Toolbar ---------- */
 .toolbar{
-  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;flex:0 0 auto;
   padding:16px 24px;border-bottom:1px solid var(--platinum);background:var(--white);
 }
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -116,9 +121,23 @@ main{flex:1;display:flex;flex-direction:column;min-width:0}
   background:var(--white);min-width:130px;
 }
 select.control{padding-right:6px;cursor:pointer}
+/* A select sizes to its longest option, which lets one long lane name push
+   the whole toolbar onto a second row. Cap it and let the text truncate. */
+.toolbar select.control{max-width:184px}
+.search{max-width:220px}
 input.control::placeholder{color:var(--gray)}
 .search{min-width:230px}
 .toolbar-spacer{margin-left:auto}
+.toolbar-secondary{background:var(--dune-light);padding-top:12px;padding-bottom:12px}
+.toolbar-secondary[hidden]{display:none}
+.badge{
+  display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
+  padding:0 5px;border-radius:9px;background:var(--red);color:var(--white);
+  font-size:11px;font-weight:700;margin-left:2px;
+}
+.badge[hidden]{display:none}
+.btn .chev{transition:transform .15s ease}
+.btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .checkline{display:flex;align-items:center;gap:8px;height:36px;font-size:13px;cursor:pointer;white-space:nowrap}
 .checkline input{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
 
@@ -162,6 +181,13 @@ input.control::placeholder{color:var(--gray)}
   display:flex;align-items:flex-end;padding:10px 16px 8px;
   font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);
 }
+.col-resize{
+  position:absolute;top:0;right:-4px;width:9px;height:100%;z-index:9;
+  cursor:col-resize;display:flex;align-items:center;justify-content:center;touch-action:none;
+}
+.col-resize::after{content:"";width:2px;height:56%;border-radius:1px;background:var(--light-gray);transition:all .12s ease}
+.col-resize:hover::after,.col-resize.dragging::after{height:100%;background:var(--red);width:3px}
+body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:none}
 .ghead-time{display:flex;flex-direction:column}
 .grow-years,.grow-quarters{display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 .gyear{
@@ -288,12 +314,12 @@ input.control::placeholder{color:var(--gray)}
 .empty p{margin:0 0 16px}
 
 /* ---------- Executive view ---------- */
-.exec-head{padding:22px 24px 4px}
+.exec-head{padding:20px 24px 4px;flex:0 0 auto}
 .exec-head h2{font-size:24px;margin-bottom:4px}
 .exec-head p{margin:0;color:var(--dark-gray);max-width:78ch}
 
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
-  background:var(--platinum);border:1px solid var(--platinum);margin:18px 24px 0}
+  background:var(--platinum);border:1px solid var(--platinum);margin:16px 24px 0;flex:0 0 auto}
 .kpi{background:var(--white);padding:14px 16px}
 .kpi .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
 .kpi .n.accent{color:var(--red)}
@@ -316,8 +342,9 @@ input.control::placeholder{color:var(--gray)}
 .disclose svg{width:12px;height:12px;transition:transform .15s ease}
 .disclose[aria-expanded="true"] svg{transform:rotate(90deg)}
 
-.legend{display:flex;flex-wrap:wrap;gap:8px 22px;padding:14px 24px;border-top:1px solid var(--platinum);
-  background:var(--white);font-size:12px;color:var(--dark-gray)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;padding:12px 24px;border-top:1px solid var(--platinum);
+  background:var(--white);font-size:12px;color:var(--dark-gray);flex:0 0 auto;
+  max-height:26vh;overflow:auto}
 .legend .grp{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
 .legend .grp > strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);font-weight:700}
 .legend .item{display:inline-flex;align-items:center;gap:6px}
@@ -401,6 +428,52 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .period{display:grid;grid-template-columns:1fr 88px;gap:8px}
 fieldset.grp{border:1px solid var(--platinum);padding:14px 16px 16px;grid-column:1/-1;margin:0}
 fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);padding:0 6px}
+/* ---------- Detail sheet (view mode) ----------
+   The initiative dialog renders the same fields twice over: read-only by
+   default, and editable once a field is clicked. Keeping one set of
+   controls means the two modes can never drift apart. */
+.viewhint{
+  display:none;align-items:center;gap:8px;margin:0 0 18px;
+  font-size:12.5px;color:var(--dark-gray);
+  border-left:3px solid var(--red);padding:7px 12px;background:var(--dune-light);
+}
+form.is-view .viewhint{display:flex}
+form.is-view .control{
+  border-color:transparent;background:transparent;padding-left:0;padding-right:0;
+  pointer-events:none;font-weight:600;height:auto;min-height:34px;
+  -webkit-appearance:none;appearance:none;text-overflow:ellipsis;
+}
+form.is-view select.control{background-image:none}
+form.is-view textarea.control{padding:0;min-height:0;font-weight:400}
+form.is-view .field{
+  cursor:pointer;border-radius:2px;padding:3px 8px;margin:-3px -8px;
+  border-bottom:1px solid var(--line);
+}
+form.is-view .field:hover,form.is-view .checkline:hover{background:var(--tundra-light)}
+form.is-view .field:hover > label{color:var(--red)}
+form.is-view .field > label{transition:color .12s ease}
+form.is-view .checkline{cursor:pointer;border-radius:2px;padding:3px 8px;margin:-3px -8px}
+form.is-view input[type=checkbox],form.is-view input[type=range]{pointer-events:none}
+form.is-view .rangeline input[type=range]{opacity:.75}
+form.is-view #e-delete{display:none}
+form.is-view .period{grid-template-columns:auto auto;justify-content:start;gap:4px}
+/* Year options carry an "(outside horizon)" suffix, so an auto-width select
+   still reserves room for the longest one. Cap it: a year is four glyphs. */
+form.is-view .period .control{min-width:0;width:auto;max-width:62px}
+form.is-view .req,form.is-view .hint,form.is-view .hint-edit{display:none}
+form.is-view fieldset.grp{border-color:var(--line)}
+form.is-view .edit-only{display:none}
+form:not(.is-view) .view-only{display:none}
+.dlg-head .lanechip{
+  display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--dark-gray);
+}
+.dlg-head .lanechip[hidden]{display:none}
+.dlg-head .lanechip i{width:11px;height:11px;border-radius:2px;background:var(--c,var(--gray));flex:0 0 auto}
+.dlg-head .stack{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.dlg-head h3{font-size:18px;flex:1}
+.dlg-head .stack h3{flex:0 0 auto}
+
 .err{color:var(--red);font-size:12.5px;font-weight:600;display:none}
 .err.show{display:block}
 .colorrow{display:flex;gap:8px;align-items:center}
@@ -468,14 +541,12 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
           <label for="f-owner">Owner</label>
           <select class="control" id="f-owner"></select>
         </div>
-        <div class="field">
-          <label for="f-theme">Theme</label>
-          <select class="control" id="f-theme"></select>
-        </div>
-        <div class="field">
-          <label for="f-platform">System</label>
-          <select class="control" id="f-platform"></select>
-        </div>
+        <button class="btn btn-quiet" type="button" id="btn-more-filters"
+                aria-expanded="false" aria-controls="toolbar-more">
+          Filters
+          <span class="badge" id="more-count" hidden>0</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
         <label class="checkline"><input type="checkbox" id="f-exec" /> Spotlight only</label>
         <div class="toolbar-spacer"></div>
         <div class="field">
@@ -491,6 +562,24 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           Add initiative
         </button>
+      </div>
+      <div class="toolbar toolbar-secondary" id="toolbar-more" hidden>
+        <div class="field">
+          <label for="f-sublane">Sub-category</label>
+          <select class="control" id="f-sublane"></select>
+        </div>
+        <div class="field">
+          <label for="f-priority">Priority</label>
+          <select class="control" id="f-priority"></select>
+        </div>
+        <div class="field">
+          <label for="f-theme">Theme</label>
+          <select class="control" id="f-theme"></select>
+        </div>
+        <div class="field">
+          <label for="f-platform">System</label>
+          <select class="control" id="f-platform"></select>
+        </div>
       </div>
       <div class="scroller" id="detail-scroller">
         <div class="gantt" id="detail-gantt"></div>
@@ -559,19 +648,26 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
 <dialog id="dlg-entry">
   <form method="dialog" id="form-entry">
     <div class="dlg-head">
-      <h3 id="dlg-entry-title">Add initiative</h3>
+      <div class="stack">
+        <h3 id="dlg-entry-title">Add initiative</h3>
+        <span class="lanechip" id="dlg-entry-lane" hidden><i></i><span></span></span>
+      </div>
       <button class="btn btn-quiet btn-icon" type="button" data-close aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <div class="dlg-body">
+    <div class="dlg-body" id="e-body">
+      <p class="viewhint">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+        Click any field to start editing.
+      </p>
       <div class="formgrid">
         <div class="field full">
-          <label for="e-title">Initiative name *</label>
+          <label for="e-title">Initiative name<span class="req"> *</span></label>
           <input class="control" id="e-title" required maxlength="140" />
         </div>
         <div class="field">
-          <label for="e-lane">Lane *</label>
+          <label for="e-lane">Lane<span class="req"> *</span></label>
           <select class="control" id="e-lane" required></select>
         </div>
         <div class="field" id="e-sublane-wrap">
@@ -622,22 +718,26 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
                 <select class="control" id="e-end-q"></select>
               </div>
             </div>
-            <label class="checkline full"><input type="checkbox" id="e-milestone" /> Point-in-time milestone (renders as a marker at the start quarter)</label>
-            <label class="checkline full"><input type="checkbox" id="e-spotlight" /> Executive spotlight &mdash; flag for leadership review</label>
+            <label class="checkline full"><input type="checkbox" id="e-milestone" /> Point-in-time milestone<span class="hint-edit">&nbsp;(renders as a marker at the start quarter)</span></label>
+            <label class="checkline full"><input type="checkbox" id="e-spotlight" /> Executive spotlight<span class="hint-edit">&nbsp;&mdash; flag for leadership review</span></label>
           </div>
         </fieldset>
         <div class="field full">
           <label for="e-notes">Notes</label>
-          <textarea class="control" id="e-notes" style="min-height:82px;font-family:var(--font-text);font-size:13px" maxlength="1200"></textarea>
+          <textarea class="control" id="e-notes" placeholder="No notes yet" style="min-height:82px;font-family:var(--font-text);font-size:13px" maxlength="1200"></textarea>
         </div>
         <p class="err full" id="e-err"></p>
       </div>
     </div>
     <div class="dlg-foot">
-      <button class="btn btn-danger" type="button" id="e-delete">Remove</button>
+      <button class="btn btn-danger edit-only" type="button" id="e-delete">Remove</button>
+      <button class="btn btn-quiet view-only" type="button" id="e-remove-view">Remove</button>
+      <button class="btn btn-quiet view-only" type="button" id="e-duplicate">Duplicate</button>
       <span class="spacer"></span>
-      <button class="btn btn-quiet" type="button" data-close>Cancel</button>
-      <button class="btn btn-primary" type="button" id="e-save">Save initiative</button>
+      <button class="btn btn-quiet view-only" type="button" data-close>Close</button>
+      <button class="btn btn-primary view-only" type="button" id="e-edit">Edit</button>
+      <button class="btn btn-quiet edit-only" type="button" id="e-cancel">Cancel</button>
+      <button class="btn btn-primary edit-only" type="button" id="e-save">Save initiative</button>
     </div>
   </form>
 </dialog>
@@ -654,12 +754,23 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
     <div class="dlg-body">
       <div class="formgrid">
         <div class="field full">
-          <label for="v-name">Name *</label>
+          <label for="v-name">Name<span class="req"> *</span></label>
           <input class="control" id="v-name" required maxlength="80" />
         </div>
         <div class="field full" id="v-parent-wrap">
-          <label for="v-parent">Belongs to lane *</label>
+          <label for="v-parent">Belongs to lane<span class="req"> *</span></label>
           <select class="control" id="v-parent"></select>
+        </div>
+        <div class="field full" id="v-kind-wrap">
+          <label for="v-kind">Behaviour</label>
+          <select class="control" id="v-kind" style="width:100%">
+            <option value="neutral">Neutral &mdash; no special treatment</option>
+            <option value="progress">In progress &mdash; counts as active delivery</option>
+            <option value="risk">At risk &mdash; red outline on the bar, counts as at risk</option>
+            <option value="hold">On hold &mdash; bar is dimmed</option>
+            <option value="done">Complete &mdash; counts as delivered</option>
+          </select>
+          <span class="hint">What the timeline and the executive KPIs do with this status. Renaming a status never changes its behaviour.</span>
         </div>
         <div class="field full" id="v-color-wrap">
           <label for="v-color">Colour</label>
@@ -706,6 +817,9 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
    1. Constants
    ============================================================ */
 var STORE_KEY = "cummins-hr-roadmap-v1";
+var VIEW_KEY  = "cummins-hr-roadmap-view-v1";
+var STATUS_KINDS = ["neutral","progress","risk","hold","done"];
+var LABEL_W_DEFAULT = 368, LABEL_W_MIN = 220, LABEL_W_MAX = 680;
 var QUARTERS  = ["Q1","Q2","Q3","Q4"];
 
 /* Approved Cummins Brand Book 2025 palette, offered in the admin colour picker. */
@@ -735,7 +849,7 @@ function seedState(){
       {id:"ln-str", name:"HR Goal Tree / Strategic",          color:"#252B4D", hasSubLanes:false},
       {id:"ln-ops", name:"Operational",                       color:"#023B3F", hasSubLanes:true},
       {id:"ln-fnd", name:"Foundational",                      color:"#F1C194", hasSubLanes:false},
-      {id:"ln-reg", name:"Regulatory, Legislative, Mandated", color:"#DA291C", hasSubLanes:false}
+      {id:"ln-reg", name:"Regulatory, Legislative, Mandated", color:"#DA291C", hasSubLanes:false, mandated:true}
     ],
     subLanes:[
       {id:"sl-upg", laneId:"ln-ops", name:"Upgrades",     color:"#023B3F"},
@@ -751,12 +865,12 @@ function seedState(){
       {id:"th-ia", name:"Intelligent Automation",color:"#30A566"}
     ],
     statuses:[
-      {id:"st-nsr", name:"Not started", color:"#E0E0DF"},
-      {id:"st-pln", name:"Planned",     color:"#D0DDE6"},
-      {id:"st-prg", name:"In progress", color:"#55A1D3"},
-      {id:"st-rsk", name:"At risk",     color:"#DA291C"},
-      {id:"st-hld", name:"On hold",     color:"#A9A8A6"},
-      {id:"st-cmp", name:"Complete",    color:"#30A566"}
+      {id:"st-nsr", name:"Not started", color:"#E0E0DF", kind:"neutral"},
+      {id:"st-pln", name:"Planned",     color:"#D0DDE6", kind:"neutral"},
+      {id:"st-prg", name:"In progress", color:"#55A1D3", kind:"progress"},
+      {id:"st-rsk", name:"At risk",     color:"#DA291C", kind:"risk"},
+      {id:"st-hld", name:"On hold",     color:"#A9A8A6", kind:"hold"},
+      {id:"st-cmp", name:"Complete",    color:"#30A566", kind:"done"}
     ],
     priorities:[
       {id:"pr-crt", name:"Critical", color:"#DA291C"},
@@ -867,12 +981,28 @@ var ui = {
   view:"detail",
   zoom:72,
   search:"",
-  filters:{lane:"",status:"",owner:"",theme:"",platform:"",execOnly:false},
+  labelW:LABEL_W_DEFAULT,
+  filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
   expanded:{},
-  adminPanel:"lanes"
+  adminPanel:"lanes",
+  adminEntrySearch:"",
+  importDraft:""
 };
+
+function saveView(){
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom})); }
+  catch(err){ /* view preferences are a nicety; never block on them */ }
+}
+function loadView(){
+  try{
+    var v = JSON.parse(localStorage.getItem(VIEW_KEY)||"null");
+    if(!v) return;
+    if(isFinite(v.labelW)) ui.labelW = Math.max(LABEL_W_MIN, Math.min(LABEL_W_MAX, Math.round(v.labelW)));
+    if([46,72,104].indexOf(Number(v.zoom)) >= 0) ui.zoom = Number(v.zoom);
+  }catch(err){ /* ignore a corrupt preference blob */ }
+}
 
 function uid(prefix){
   return prefix+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -898,6 +1028,13 @@ function normalise(S){
   S.config.startYear = clampYear(S.config.startYear, 2027);
   S.config.endYear   = clampYear(S.config.endYear, S.config.startYear+2);
   if(S.config.endYear < S.config.startYear) S.config.endYear = S.config.startYear;
+  S.statuses.forEach(function(st){
+    if(STATUS_KINDS.indexOf(st.kind) < 0) st.kind = kindFromName(st.name);
+  });
+  S.lanes.forEach(function(l){
+    l.hasSubLanes = !!l.hasSubLanes;
+    l.mandated = !!l.mandated;
+  });
   S.entries.forEach(function(e){
     e.progress = Math.max(0, Math.min(100, Number(e.progress)||0));
     e.sq = clampQ(e.sq); e.eq = clampQ(e.eq);
@@ -906,6 +1043,17 @@ function normalise(S){
   });
   return true;
 }
+/* Legacy payloads keyed behaviour off the status name. Map once, then
+   never look at the name again. */
+function kindFromName(name){
+  var n = String(name||"").toLowerCase();
+  if(n.indexOf("risk") >= 0) return "risk";
+  if(n.indexOf("hold") >= 0 || n.indexOf("paused") >= 0) return "hold";
+  if(n.indexOf("complete") >= 0 || n.indexOf("done") >= 0 || n.indexOf("delivered") >= 0) return "done";
+  if(n.indexOf("progress") >= 0 || n.indexOf("in flight") >= 0 || n.indexOf("active") >= 0) return "progress";
+  return "neutral";
+}
+
 function clampYear(y, fallback){
   y = Math.round(Number(y));
   return (isFinite(y) && y>=2000 && y<=2100) ? y : fallback;
@@ -967,6 +1115,15 @@ function toast(msg){
 }
 function esc(s){ return String(s==null?"":s); }
 
+function statusOf(e){ return byId(state.statuses, e.statusId); }
+function kindOf(e){
+  var st = statusOf(e);
+  return st ? (st.kind || "neutral") : "neutral";
+}
+function countKind(list, kind){
+  return list.filter(function(e){ return kindOf(e) === kind; }).length;
+}
+
 /* ---- Timeline maths ---- */
 function years(){
   var out = [];
@@ -990,6 +1147,7 @@ function ganttHeader(){
   head.style.setProperty("--cols", cols);
 
   var lab = el("div","ghead-label","Initiative");
+  lab.appendChild(resizeGrip());
   head.appendChild(lab);
 
   var time = el("div","ghead-time");
@@ -1006,6 +1164,59 @@ function ganttHeader(){
   time.appendChild(yrow); time.appendChild(qrow);
   head.appendChild(time);
   return head;
+}
+
+/* Drag the divider to widen the Initiative column; double-click resets it. */
+function resizeGrip(){
+  var grip = el("div","col-resize");
+  grip.title = "Drag to resize the Initiative column · double-click to reset";
+  grip.setAttribute("role","separator");
+  grip.setAttribute("aria-orientation","vertical");
+  grip.setAttribute("aria-label","Resize the Initiative column");
+  grip.tabIndex = 0;
+
+  grip.addEventListener("pointerdown", function(ev){
+    ev.preventDefault();
+    var startX = ev.clientX, startW = ui.labelW;
+    grip.setPointerCapture(ev.pointerId);
+    grip.classList.add("dragging");
+    document.body.classList.add("col-resizing");
+    function move(e){ setLabelWidth(startW + (e.clientX - startX)); }
+    function up(e){
+      grip.classList.remove("dragging");
+      document.body.classList.remove("col-resizing");
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+      try{ grip.releasePointerCapture(ev.pointerId); }catch(err){}
+      saveView();
+    }
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
+  });
+  grip.addEventListener("dblclick", function(){ setLabelWidth(LABEL_W_DEFAULT); saveView(); });
+  grip.addEventListener("keydown", function(ev){
+    var step = ev.shiftKey ? 40 : 12;
+    if(ev.key === "ArrowLeft"){ ev.preventDefault(); setLabelWidth(ui.labelW - step); saveView(); }
+    if(ev.key === "ArrowRight"){ ev.preventDefault(); setLabelWidth(ui.labelW + step); saveView(); }
+    if(ev.key === "Home"){ ev.preventDefault(); setLabelWidth(LABEL_W_DEFAULT); saveView(); }
+  });
+  return grip;
+}
+
+function setLabelWidth(px){
+  ui.labelW = Math.max(LABEL_W_MIN, Math.min(LABEL_W_MAX, Math.round(px)));
+  applyMetrics();
+}
+/* One place that pushes the two live measurements onto both timelines. */
+function applyMetrics(){
+  ["#detail-gantt","#exec-gantt"].forEach(function(sel){
+    var g = $(sel);
+    if(!g) return;
+    g.style.setProperty("--label-w", ui.labelW+"px");
+    g.style.setProperty("--colw", ui.zoom+"px");
+  });
 }
 
 function makeTrack(cls){
@@ -1097,7 +1308,9 @@ function emptyBlock(title, msg, actionLabel, action){
 function matchesFilters(e){
   var f = ui.filters;
   if(f.lane && e.laneId!==f.lane) return false;
+  if(f.subLane && e.subLaneId!==f.subLane) return false;
   if(f.status && e.statusId!==f.status) return false;
+  if(f.priority && e.priorityId!==f.priority) return false;
   if(f.owner && e.ownerId!==f.owner) return false;
   if(f.theme && e.themeId!==f.theme) return false;
   if(f.platform && e.platformId!==f.platform) return false;
@@ -1107,7 +1320,8 @@ function matchesFilters(e){
       e.title, e.notes,
       nameOf(state.owners,e.ownerId), nameOf(state.platforms,e.platformId),
       nameOf(state.themes,e.themeId), nameOf(state.lanes,e.laneId),
-      nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId)
+      nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId),
+      nameOf(state.priorities,e.priorityId)
     ].join(" ").toLowerCase();
     if(hay.indexOf(ui.search.toLowerCase())<0) return false;
   }
@@ -1123,7 +1337,9 @@ function sortEntries(a,b){
 function entryRow(e, childOf){
   var lane = byId(state.lanes, e.laneId);
   var sub  = byId(state.subLanes, e.subLaneId);
-  var status = byId(state.statuses, e.statusId);
+  var status = statusOf(e);
+  var kind = kindOf(e);
+  var priority = byId(state.priorities, e.priorityId);
   var color = (sub && sub.color) || (lane && lane.color) || "#787877";
 
   var row = el("div","grow"+(childOf?" child":""));
@@ -1146,6 +1362,7 @@ function entryRow(e, childOf){
 
   var bits = [];
   if(status) bits.push(status.name);
+  if(priority) bits.push(priority.name+" priority");
   if(e.ownerId) bits.push(nameOf(state.owners,e.ownerId));
   if(e.platformId) bits.push(nameOf(state.platforms,e.platformId));
   bits.push(spanLabel(e));
@@ -1163,8 +1380,8 @@ function entryRow(e, childOf){
   var en = e.milestone ? s : colIndex(e.ey,e.eq);
   var extra = [];
   if(e.milestone) extra.push("milestone");
-  if(status && status.name==="At risk") extra.push("at-risk");
-  if(status && status.name==="On hold") extra.push("on-hold");
+  if(kind==="risk") extra.push("at-risk");
+  if(kind==="hold") extra.push("on-hold");
 
   var bar = placeBar(track, s, en, {
     color: color,
@@ -1175,7 +1392,13 @@ function entryRow(e, childOf){
     title: e.title + "\n" + spanLabel(e) + (status? "\n"+status.name : "") + (e.progress? "  ·  "+e.progress+"% complete":"")
   });
   if(bar){
+    bar.tabIndex = 0;
+    bar.setAttribute("role","button");
+    bar.setAttribute("aria-label", e.title+", "+spanLabel(e));
     bar.addEventListener("click", function(){ openEntryDialog(e.id); });
+    bar.addEventListener("keydown", function(ev){
+      if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openEntryDialog(e.id); }
+    });
   }else{
     track.appendChild(el("div","gcell-meta","Outside the configured horizon"));
   }
@@ -1186,7 +1409,7 @@ function entryRow(e, childOf){
 function renderDetail(){
   var host = $("#detail-gantt");
   host.innerHTML = "";
-  host.style.setProperty("--colw", ui.zoom+"px");
+  applyMetrics();
 
   var visible = state.entries.filter(matchesFilters);
   host.appendChild(ganttHeader());
@@ -1297,12 +1520,13 @@ function renderExecKpis(list){
   var host = $("#exec-kpis");
   host.innerHTML = "";
 
-  var statusName = function(e){ return nameOf(state.statuses, e.statusId); };
-  var inFlight = list.filter(function(e){ return statusName(e)==="In progress"; }).length;
-  var atRisk   = list.filter(function(e){ return statusName(e)==="At risk"; }).length;
+  var inFlight = countKind(list, "progress");
+  var atRisk   = countKind(list, "risk");
+  var done     = countKind(list, "done");
   var spot     = list.filter(function(e){ return e.spotlight; }).length;
-  var regLane  = state.lanes.filter(function(l){ return /regulatory/i.test(l.name); })[0];
-  var mandated = regLane ? list.filter(function(e){ return e.laneId===regLane.id; }).length : 0;
+  var mandatedLanes = {};
+  state.lanes.forEach(function(l){ if(l.mandated) mandatedLanes[l.id] = true; });
+  var mandated = list.filter(function(e){ return mandatedLanes[e.laneId]; }).length;
   var firstYear = state.config.startYear;
   var landing = list.filter(function(e){ return e.ey===firstYear || (e.milestone && e.sy===firstYear); }).length;
 
@@ -1311,9 +1535,13 @@ function renderExecKpis(list){
     {n:inFlight,    k:"In progress",            s:"Active delivery today"},
     {n:atRisk,      k:"At risk",                s:"Need leadership attention", accent:atRisk>0},
     {n:spot,        k:"Executive spotlight",    s:"Flagged for review"},
-    {n:mandated,    k:"Regulatory & mandated",  s:"Non-discretionary"},
     {n:landing,     k:"Landing in "+firstYear,  s:"Complete or due this year"}
   ];
+  if(Object.keys(mandatedLanes).length){
+    cards.push({n:mandated, k:"Mandated", s:"Non-discretionary lanes"});
+  }else{
+    cards.push({n:done, k:"Complete", s:"Delivered so far"});
+  }
   cards.forEach(function(c){
     var box = el("div","kpi");
     var n = el("div","n"+(c.accent?" accent":""), String(c.n));
@@ -1337,9 +1565,9 @@ function aggregate(items){
     var en = e.milestone ? s : colIndex(e.ey,e.eq);
     if(s<minS) minS = s;
     if(en>maxE) maxE = en;
-    var sn = nameOf(state.statuses,e.statusId);
-    if(sn==="At risk") risk = true;
-    if(sn==="Complete") done++;
+    var k = kindOf(e);
+    if(k==="risk") risk = true;
+    if(k==="done") done++;
     prog += (Number(e.progress)||0);
   });
   return {
@@ -1424,7 +1652,7 @@ function rollupRow(opts){
 function renderExec(){
   var host = $("#exec-gantt");
   host.innerHTML = "";
-  host.style.setProperty("--colw", ui.zoom+"px");
+  applyMetrics();
 
   var items = execEntries();
   renderExecKpis(items);
@@ -1513,8 +1741,8 @@ var ADMIN = {
   },
   statuses:{
     key:"statuses", title:"Statuses",
-    lede:"Delivery statuses. “At risk” and “On hold” change how a bar is drawn, so keep those names if you rely on that treatment.",
-    singular:"status", color:true, parent:false, desc:false, orderable:true, field:"statusId"
+    lede:"Delivery statuses. Each one carries a behaviour that drives the bar treatment and the executive KPIs, so you can rename a status freely without changing what it does.",
+    singular:"status", color:true, parent:false, desc:false, orderable:true, field:"statusId", kind:true
   },
   priorities:{
     key:"priorities", title:"Priorities",
@@ -1531,6 +1759,11 @@ var ADMIN = {
     lede:"Systems and platforms an initiative touches.",
     singular:"system", color:false, parent:false, desc:true, orderable:true, field:"platformId"
   }
+};
+
+var KIND_LABELS = {
+  neutral:"Neutral", progress:"In progress", risk:"At risk",
+  hold:"On hold", done:"Complete"
 };
 
 function usageCount(field, id){
@@ -1575,8 +1808,8 @@ function renderCollectionPanel(host, cfg){
 
   var tbl = el("table","tbl");
   var thead = el("thead"), tr = el("tr");
-  ["Name"].concat(cfg.parent?["Lane"]:[], cfg.color?["Colour"]:[], cfg.desc?["Description"]:[],
-    cfg.key==="lanes"?["Sub-categories"]:[], ["In use",""])
+  ["Name"].concat(cfg.parent?["Lane"]:[], cfg.kind?["Behaviour"]:[], cfg.color?["Colour"]:[],
+    cfg.desc?["Description"]:[], cfg.key==="lanes"?["Sub-categories","Mandated"]:[], ["In use",""])
     .forEach(function(h){ tr.appendChild(el("th",null,h)); });
   thead.appendChild(tr); tbl.appendChild(thead);
 
@@ -1592,6 +1825,11 @@ function renderCollectionPanel(host, cfg){
       var tag = el("span","tag", lane ? lane.name : "Unassigned");
       td.appendChild(tag);
       row.appendChild(td);
+    }
+    if(cfg.kind){
+      var tdk = el("td");
+      tdk.appendChild(el("span","tag", KIND_LABELS[item.kind] || KIND_LABELS.neutral));
+      row.appendChild(tdk);
     }
     if(cfg.color){
       var tdc = el("td");
@@ -1621,6 +1859,20 @@ function renderCollectionPanel(host, cfg){
       lbl.appendChild(el("span",null, item.hasSubLanes ? "Enabled" : "Off"));
       tdS.appendChild(lbl);
       row.appendChild(tdS);
+
+      var tdM = el("td");
+      var mlbl = el("label","checkline");
+      var mcb = document.createElement("input");
+      mcb.type = "checkbox"; mcb.checked = !!item.mandated;
+      mcb.title = "Counts towards the Mandated KPI on the executive view";
+      mcb.addEventListener("change", function(){
+        item.mandated = mcb.checked;
+        commit("Lane updated");
+      });
+      mlbl.appendChild(mcb);
+      mlbl.appendChild(el("span",null, item.mandated ? "Yes" : "No"));
+      tdM.appendChild(mlbl);
+      row.appendChild(tdM);
     }
 
     var n = usageCount(cfg.field, item.id);
@@ -1776,6 +2028,7 @@ function renderEntriesPanel(host){
   wrap.appendChild(el("label",null,"Filter"));
   var q = document.createElement("input");
   q.className = "control"; q.type = "search"; q.placeholder = "Search initiatives"; q.style.width = "100%";
+  q.value = ui.adminEntrySearch;
   wrap.appendChild(q); head.appendChild(wrap);
 
   var add = el("button","btn btn-primary","Add initiative");
@@ -1789,7 +2042,7 @@ function renderEntriesPanel(host){
 
   function draw(){
     tblWrap.innerHTML = "";
-    var term = q.value.trim().toLowerCase();
+    var term = ui.adminEntrySearch.trim().toLowerCase();
     var rows = state.entries.filter(function(e){
       return !term || (e.title+" "+(e.notes||"")).toLowerCase().indexOf(term)>=0;
     }).slice().sort(sortEntries);
@@ -1828,7 +2081,7 @@ function renderEntriesPanel(host){
       r.appendChild(el("td",null,nameOf(state.owners,e.ownerId,"—")||"—"));
       r.appendChild(el("td",null,spanLabel(e)));
       var tdA = el("td","actions");
-      var ed = el("button","btn btn-sm btn-quiet","Edit"); ed.type="button";
+      var ed = el("button","btn btn-sm btn-quiet","Open"); ed.type="button";
       ed.addEventListener("click", function(){ openEntryDialog(e.id); });
       tdA.appendChild(ed);
       var rm = el("button","btn btn-sm btn-danger","Remove"); rm.type="button";
@@ -1840,7 +2093,7 @@ function renderEntriesPanel(host){
     tbl.appendChild(tbody);
     tblWrap.appendChild(tbl);
   }
-  q.addEventListener("input", draw);
+  q.addEventListener("input", function(){ ui.adminEntrySearch = q.value; draw(); });
   draw();
 }
 
@@ -1913,6 +2166,8 @@ function renderDataPanel(host){
   c2.appendChild(el("p",null,"Paste an exported payload, or choose a .json file. This replaces everything currently stored."));
   var ta2 = document.createElement("textarea");
   ta2.className = "control"; ta2.placeholder = "Paste exported JSON here";
+  ta2.value = ui.importDraft;
+  ta2.addEventListener("input", function(){ ui.importDraft = ta2.value; });
   c2.appendChild(ta2);
   var err2 = el("p","err"); c2.appendChild(err2);
   var row2 = el("div","panel-head");
@@ -1980,6 +2235,7 @@ function doImport(text, errNode){
     normalise(parsed);
     state = parsed;
     ui.expanded = {};
+    ui.importDraft = "";
     commit("Roadmap imported");
   });
 }
@@ -2006,11 +2262,14 @@ function fillSelect(sel, list, opts){
 function fillYears(sel, selected){
   sel.innerHTML = "";
   var ys = years();
-  /* Allow one year of slack either side so an initiative can be planned
-     just outside the drawn horizon. */
-  for(var y=ys[0]-1; y<=ys[ys.length-1]+1; y++){
+  /* One year of slack either side, widened so an initiative dated outside
+     the drawn horizon keeps its own year rather than being silently
+     rewritten to the first option on save. */
+  var lo = Math.min(ys[0]-1, selected), hi = Math.max(ys[ys.length-1]+1, selected);
+  for(var y=lo; y<=hi; y++){
     var o = document.createElement("option");
     o.value = String(y); o.textContent = String(y);
+    if(y < ys[0] || y > ys[ys.length-1]) o.textContent += " (outside horizon)";
     sel.appendChild(o);
   }
   sel.value = String(selected);
@@ -2026,6 +2285,7 @@ function fillQuarters(sel, selected){
 }
 
 var editingEntryId = null;
+var entryMode = "view";
 
 function syncSubLaneField(selectedSub){
   var lane = byId(state.lanes, $("#e-lane").value);
@@ -2041,12 +2301,26 @@ function syncSubLaneField(selectedSub){
   }
 }
 
-function openEntryDialog(id){
+function openEntryDialog(id, mode){
+  populateEntryForm(id);
+  setEntryMode(mode || (editingEntryId ? "view" : "edit"));
+  if(!$("#dlg-entry").open) $("#dlg-entry").showModal();
+  var opened = entryMode;
+  setTimeout(function(){
+    /* If something switched modes in the meantime it has already placed
+       focus where it wants it — leave it alone. */
+    if(entryMode !== opened) return;
+    if(entryMode === "edit") $("#e-title").focus();
+    else $("#e-edit").focus();
+  }, 30);
+}
+
+/* Fills every control from the stored entry. Both modes read the same
+   controls, so this runs once per open and again whenever an edit is
+   cancelled. */
+function populateEntryForm(id){
   var e = id ? byId(state.entries, id) : null;
   editingEntryId = e ? e.id : null;
-
-  $("#dlg-entry-title").textContent = e ? "Edit initiative" : "Add initiative";
-  $("#e-delete").style.display = e ? "" : "none";
   $("#e-err").classList.remove("show");
 
   $("#e-title").value = e ? e.title : "";
@@ -2071,9 +2345,34 @@ function openEntryDialog(id){
   $("#e-spotlight").checked = e ? !!e.spotlight : false;
   $("#e-notes").value = e ? (e.notes||"") : "";
   syncMilestoneField();
+  syncLaneChip();
+}
 
-  $("#dlg-entry").showModal();
-  setTimeout(function(){ $("#e-title").focus(); }, 30);
+/* The lane / sub-category badge under the dialog title. */
+function syncLaneChip(){
+  var chip = $("#dlg-entry-lane");
+  var lane = byId(state.lanes, $("#e-lane").value);
+  if(!lane){ chip.hidden = true; return; }
+  var subSel = $("#e-sublane");
+  var sub = (lane.hasSubLanes && subSel.value) ? byId(state.subLanes, subSel.value) : null;
+  chip.hidden = false;
+  chip.querySelector("i").style.setProperty("--c", (sub && sub.color) || lane.color);
+  chip.querySelector("span").textContent = lane.name + (sub ? " · " + sub.name : "");
+}
+
+function setEntryMode(mode){
+  entryMode = (mode === "edit") ? "edit" : "view";
+  var form = $("#form-entry");
+  form.classList.toggle("is-view", entryMode === "view");
+  $("#e-err").classList.remove("show");
+
+  var e = editingEntryId ? byId(state.entries, editingEntryId) : null;
+  $("#dlg-entry-title").textContent =
+    entryMode === "view" ? (e ? e.title : "Initiative")
+                         : (e ? "Edit initiative" : "Add initiative");
+  /* A brand-new initiative has nothing to view, duplicate or remove yet. */
+  $("#e-duplicate").style.display = e ? "" : "none";
+  $("#e-remove-view").style.display = e ? "" : "none";
 }
 
 function syncMilestoneField(){
@@ -2119,15 +2418,40 @@ function saveEntry(){
     notes: $("#e-notes").value.trim()
   };
 
-  if(editingEntryId){
+  var wasEditing = !!editingEntryId;
+  if(wasEditing){
     var e = byId(state.entries, editingEntryId);
     if(e) Object.keys(data).forEach(function(k){ e[k] = data[k]; });
   }else{
     data.id = uid("en");
     state.entries.push(data);
+    editingEntryId = data.id;
   }
-  $("#dlg-entry").close();
-  commit(editingEntryId ? "Initiative updated" : "Initiative added");
+  commit(wasEditing ? "Initiative updated" : "Initiative added");
+  /* Back to the detail sheet so the saved values are visible straight away. */
+  populateEntryForm(editingEntryId);
+  setEntryMode("view");
+}
+
+function cancelEntryEdit(){
+  if(editingEntryId){
+    populateEntryForm(editingEntryId);
+    setEntryMode("view");
+  }else{
+    $("#dlg-entry").close();
+  }
+}
+
+function duplicateEntry(){
+  var e = editingEntryId ? byId(state.entries, editingEntryId) : null;
+  if(!e) return;
+  var copy = JSON.parse(JSON.stringify(e));
+  copy.id = uid("en");
+  copy.title = e.title + " (copy)";
+  copy.progress = 0;
+  state.entries.push(copy);
+  commit("Duplicated — edit and save the copy");
+  openEntryDialog(copy.id, "edit");
 }
 
 function deleteEntry(id){
@@ -2159,6 +2483,9 @@ function openValueDialog(cfg, id){
       selected: item ? item.laneId : (lanesWithSubs[0] ? lanesWithSubs[0].id : "")
     });
   }
+
+  $("#v-kind-wrap").style.display = cfg.kind ? "" : "none";
+  if(cfg.kind) $("#v-kind").value = (item && STATUS_KINDS.indexOf(item.kind)>=0) ? item.kind : "neutral";
 
   $("#v-color-wrap").style.display = cfg.color ? "" : "none";
   if(cfg.color){
@@ -2233,9 +2560,13 @@ function saveValue(){
   }
   item.name = name;
   if(cfg.parent) item.laneId = laneId;
+  if(cfg.kind)   item.kind = $("#v-kind").value;
   if(cfg.color)  item.color = hex;
   if(cfg.desc)   item.desc = $("#v-desc").value.trim();
-  if(cfg.key==="lanes" && item.hasSubLanes===undefined) item.hasSubLanes = false;
+  if(cfg.key==="lanes"){
+    if(item.hasSubLanes===undefined) item.hasSubLanes = false;
+    if(item.mandated===undefined) item.mandated = false;
+  }
 
   $("#dlg-value").close();
   commit(editingValue.id ? name+" updated" : name+" added");
@@ -2252,23 +2583,45 @@ function commit(msg){
 
 function refreshFilterSelects(){
   fillSelect($("#f-lane"),     state.lanes,     {placeholder:"All lanes",   selected:ui.filters.lane});
+  /* Sub-categories narrow to the chosen lane, otherwise every lane's are offered. */
+  var subs = ui.filters.lane
+    ? state.subLanes.filter(function(x){ return x.laneId===ui.filters.lane; })
+    : state.subLanes;
+  fillSelect($("#f-sublane"),  subs,            {placeholder:"All sub-categories", selected:ui.filters.subLane});
   fillSelect($("#f-status"),   state.statuses,  {placeholder:"All statuses",selected:ui.filters.status});
+  fillSelect($("#f-priority"), state.priorities,{placeholder:"All priorities", selected:ui.filters.priority});
   fillSelect($("#f-owner"),    state.owners,    {placeholder:"All owners",  selected:ui.filters.owner});
   fillSelect($("#f-theme"),    state.themes,    {placeholder:"All themes",  selected:ui.filters.theme});
   fillSelect($("#f-platform"), state.platforms, {placeholder:"All systems", selected:ui.filters.platform});
   fillSelect($("#fx-lane"),    state.lanes,     {placeholder:"All lanes",   selected:ui.execFilters.lane});
   /* fillSelect blanks a value that no longer exists — mirror that back. */
   ui.filters.lane     = $("#f-lane").value;
+  ui.filters.subLane  = $("#f-sublane").value;
   ui.filters.status   = $("#f-status").value;
+  ui.filters.priority = $("#f-priority").value;
   ui.filters.owner    = $("#f-owner").value;
   ui.filters.theme    = $("#f-theme").value;
   ui.filters.platform = $("#f-platform").value;
   ui.execFilters.lane = $("#fx-lane").value;
 }
 
+/* The badge is the only sign a collapsed filter is still narrowing the view. */
+function refreshFilterBadge(){
+  var f = ui.filters;
+  var n = [f.subLane, f.priority, f.theme, f.platform].filter(Boolean).length;
+  var badge = $("#more-count");
+  badge.textContent = String(n);
+  badge.hidden = n === 0;
+  if(n && $("#btn-more-filters").getAttribute("aria-expanded") !== "true"){
+    $("#btn-more-filters").setAttribute("aria-expanded","true");
+    $("#toolbar-more").hidden = false;
+  }
+}
+
 function renderAll(){
   $("#horizonLabel").textContent = state.config.startYear + "–" + state.config.endYear;
   refreshFilterSelects();
+  refreshFilterBadge();
   renderDetail();
   renderExec();
   renderAdmin();
@@ -2276,7 +2629,7 @@ function renderAll(){
 
 function resetFilters(){
   ui.search = "";
-  ui.filters = {lane:"",status:"",owner:"",theme:"",platform:"",execOnly:false};
+  ui.filters = {lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false};
   $("#f-search").value = "";
   $("#f-exec").checked = false;
   renderAll();
@@ -2303,12 +2656,26 @@ function wire(){
   });
 
   $("#f-search").addEventListener("input", function(){ ui.search = this.value.trim(); renderDetail(); });
-  $("#f-lane").addEventListener("change", function(){ ui.filters.lane = this.value; renderDetail(); });
+  $("#f-lane").addEventListener("change", function(){
+    ui.filters.lane = this.value;
+    /* A sub-category from another lane can no longer match; drop it. */
+    var keep = byId(state.subLanes, ui.filters.subLane);
+    if(keep && ui.filters.lane && keep.laneId !== ui.filters.lane) ui.filters.subLane = "";
+    refreshFilterSelects();
+    renderDetail();
+  });
+  $("#f-sublane").addEventListener("change", function(){ ui.filters.subLane = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-status").addEventListener("change", function(){ ui.filters.status = this.value; renderDetail(); });
+  $("#f-priority").addEventListener("change", function(){ ui.filters.priority = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-owner").addEventListener("change", function(){ ui.filters.owner = this.value; renderDetail(); });
-  $("#f-theme").addEventListener("change", function(){ ui.filters.theme = this.value; renderDetail(); });
-  $("#f-platform").addEventListener("change", function(){ ui.filters.platform = this.value; renderDetail(); });
+  $("#f-theme").addEventListener("change", function(){ ui.filters.theme = this.value; refreshFilterBadge(); renderDetail(); });
+  $("#f-platform").addEventListener("change", function(){ ui.filters.platform = this.value; refreshFilterBadge(); renderDetail(); });
   $("#f-exec").addEventListener("change", function(){ ui.filters.execOnly = this.checked; renderDetail(); });
+  $("#btn-more-filters").addEventListener("click", function(){
+    var open = this.getAttribute("aria-expanded") === "true";
+    this.setAttribute("aria-expanded", open ? "false" : "true");
+    $("#toolbar-more").hidden = open;
+  });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
   $("#btn-add").addEventListener("click", function(){ openEntryDialog(null); });
 
@@ -2318,6 +2685,7 @@ function wire(){
       $$("#view-detail .segmented button").forEach(function(x){
         x.setAttribute("aria-pressed", x===b ? "true":"false");
       });
+      saveView();
       renderDetail(); renderExec();
     });
   });
@@ -2350,12 +2718,38 @@ function wire(){
   });
 
   /* Entry dialog */
-  $("#e-lane").addEventListener("change", function(){ syncSubLaneField(""); });
+  $("#e-lane").addEventListener("change", function(){ syncSubLaneField(""); syncLaneChip(); });
+  $("#e-sublane").addEventListener("change", syncLaneChip);
+  $("#e-edit").addEventListener("click", function(){
+    setEntryMode("edit");
+    $("#e-title").focus();
+    $("#e-title").select();
+  });
+  $("#e-cancel").addEventListener("click", cancelEntryEdit);
+  $("#e-duplicate").addEventListener("click", duplicateEntry);
+  $("#e-remove-view").addEventListener("click", function(){
+    if(editingEntryId) deleteEntry(editingEntryId);
+  });
+
+  /* Click any field on the detail sheet to edit it in place. */
+  $("#e-body").addEventListener("click", function(ev){
+    if(entryMode !== "view") return;
+    var host = ev.target.closest(".field, .checkline");
+    if(!host || !this.contains(host)) return;
+    var ctrl = host.querySelector(".control, input[type=checkbox]");
+    setEntryMode("edit");
+    if(ctrl){
+      try{ ctrl.focus(); if(ctrl.select) ctrl.select(); }catch(err){}
+    }
+  });
   $("#e-milestone").addEventListener("change", syncMilestoneField);
   $("#e-progress").addEventListener("input", function(){ $("#e-progress-out").textContent = this.value+"%"; });
   $("#e-save").addEventListener("click", saveEntry);
   $("#e-delete").addEventListener("click", function(){ if(editingEntryId) deleteEntry(editingEntryId); });
-  $("#form-entry").addEventListener("submit", function(ev){ ev.preventDefault(); saveEntry(); });
+  $("#form-entry").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    if(entryMode === "edit") saveEntry(); else setEntryMode("edit");
+  });
 
   /* Value dialog */
   $("#v-save").addEventListener("click", saveValue);
@@ -2422,6 +2816,7 @@ function collectBandKeys(){
    ============================================================ */
 state = load() || seedState();
 normalise(state);
+loadView();
 wire();
 renderAll();
 setView(String(location.hash).replace("#","") || "detail", true);
