@@ -456,6 +456,63 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   box-shadow:0 0 0 1.5px color-mix(in srgb, var(--fg,#fff) 70%, transparent);
 }
 
+/* ---------- Dependency links ---------- */
+.deplinks{position:absolute;left:0;top:0;pointer-events:none;z-index:0;overflow:visible}
+.deplink path{
+  fill:none;stroke:var(--gray);stroke-width:1.5;
+  stroke-linejoin:round;stroke-linecap:round;opacity:.85;
+}
+.deplink .arrow{fill:var(--gray);stroke:none}
+.deplink.tight path{stroke:var(--dawn);stroke-dasharray:5 3;stroke-width:1.8;opacity:1}
+.deplink.tight .arrow{fill:var(--dawn)}
+.deplinks.has-focus .deplink{opacity:.18}
+.deplinks.has-focus .deplink.hot{opacity:1}
+.deplinks.has-focus .deplink.hot path{stroke:var(--ink);stroke-width:2.2}
+.deplinks.has-focus .deplink.hot.tight path{stroke:var(--red)}
+.deplinks.has-focus .deplink.hot .arrow{fill:var(--ink)}
+.deplinks.has-focus .deplink.hot.tight .arrow{fill:var(--red)}
+.gbar{z-index:1}
+
+.deplink-flag{
+  display:inline-flex;align-items:center;gap:3px;flex:0 0 auto;
+  font-size:10.5px;font-weight:700;color:var(--ink-soft);
+  background:var(--surface-sunk);border-radius:var(--r-pill);padding:1px 7px 1px 5px;
+}
+.deplink-flag svg{width:11px;height:11px}
+.deplink-flag.tight{background:var(--dawn);color:#000}
+
+/* ---------- Dependency editing ---------- */
+.depchips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.depchips:empty{display:none}
+.depchip{
+  display:inline-flex;align-items:center;gap:7px;max-width:100%;
+  background:var(--surface);border:1px solid var(--outline);border-radius:var(--r-pill);
+  padding:5px 6px 5px 11px;font-size:12.5px;font-weight:600;
+}
+.depchip i{width:9px;height:9px;border-radius:3px;background:var(--lane,var(--gray));flex:0 0 auto}
+.depchip .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.depchip.external{border-style:dashed;font-weight:500}
+.depchip.tight{border-color:var(--dawn);background:color-mix(in srgb, var(--dawn) 14%, var(--surface))}
+.depchip .why{font-weight:600;color:var(--redwood);font-size:11px;white-space:nowrap}
+.depchip button{
+  border:0;background:none;cursor:pointer;color:var(--ink-soft);padding:2px;
+  border-radius:var(--r-pill);display:inline-flex;flex:0 0 auto;
+}
+.depchip button:hover{background:var(--surface-sunk);color:var(--red)}
+.depchip button svg{width:12px;height:12px}
+.depchip.link{cursor:pointer}
+.depchip.link:hover{border-color:var(--ink)}
+form.is-view .depchip button{display:none}
+.depadd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.depadd .control{height:36px;min-width:0;flex:1 1 190px;max-width:280px}
+.depsep{font-size:12px;color:var(--ink-soft)}
+.depneeded{
+  margin-top:12px;font-size:12px;color:var(--ink-soft);
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+}
+.depneeded:empty{display:none}
+.depneeded strong{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase}
+
 /* ---------- Direct manipulation ----------
    Two separate gestures, so neither can be triggered by accident:
    the grip on the left of a row moves it between lanes and positions,
@@ -562,6 +619,7 @@ body.bar-dragging,body.bar-dragging *{user-select:none}
 .legend .sw{width:12px;height:12px;border-radius:4px;background:var(--c);flex:0 0 auto}
 .legend .sw.dot{border-radius:50%;width:10px;height:10px}
 .legend .sw.dia{transform:rotate(45deg);width:11px;height:11px}
+.legendswatch{flex:0 0 auto;vertical-align:middle}
 
 /* ---------- Admin console ---------- */
 .admin{display:grid;grid-template-columns:230px 1fr;flex:1;min-height:0}
@@ -781,6 +839,10 @@ form:not(.is-view) .view-only{display:none}
           <button data-zoom="72" type="button" aria-pressed="true" title="Medium columns">M</button>
           <button data-zoom="104" type="button" title="Wide columns">L</button>
         </div>
+        <button class="btn btn-quiet btn-icon" id="btn-deps" type="button"
+                aria-pressed="true" aria-label="Hide dependency links" title="Hide dependency links">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 007.1 0l3-3a5 5 0 00-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.1 0l-3 3a5 5 0 007.1 7.1l1.7-1.7"/></svg>
+        </button>
         <button class="btn btn-quiet btn-icon" id="btn-collapse-lanes" type="button"
                 aria-label="Collapse all lanes" title="Collapse every lane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l8-5 8 5"/><path d="M4 15l8 5 8-5"/></svg>
@@ -962,6 +1024,20 @@ form:not(.is-view) .view-only{display:none}
             <label class="checkline full"><input type="checkbox" id="e-milestone" /> Point-in-time milestone<span class="hint-edit">&nbsp;(renders as a marker at the start quarter)</span></label>
             <label class="checkline full"><input type="checkbox" id="e-spotlight" /> Executive spotlight<span class="hint-edit">&nbsp;&mdash; flag for leadership review</span></label>
           </div>
+        </fieldset>
+        <fieldset class="grp" id="e-deps-wrap">
+          <legend>Dependencies</legend>
+          <div class="depchips" id="e-deps-list"></div>
+          <div class="depadd edit-only">
+            <select class="control" id="e-dep-pick" aria-label="Add a dependency on another initiative"></select>
+            <button class="btn btn-quiet btn-sm" type="button" id="e-dep-add">Add</button>
+            <span class="depsep">or</span>
+            <input class="control" id="e-dep-text" maxlength="140"
+                   placeholder="Something outside the roadmap&hellip;" aria-label="Add an external dependency" />
+            <button class="btn btn-quiet btn-sm" type="button" id="e-dep-add-text">Add</button>
+          </div>
+          <p class="err" id="e-dep-err"></p>
+          <div class="depneeded" id="e-dep-needed"></div>
         </fieldset>
         <div class="field full">
           <label for="e-notes">Notes</label>
@@ -1197,9 +1273,29 @@ function seedState(){
       id:"en-"+(i+1), title:r[0], laneId:r[1], subLaneId:r[2], themeId:r[3],
       ownerId:r[4], platformId:r[5], statusId:r[6], priorityId:r[7],
       sy:r[8], sq:r[9], ey:r[10], eq:r[11],
-      progress:r[12], milestone:r[13], spotlight:r[14], notes:r[15]
+      progress:r[12], milestone:r[13], spotlight:r[14], notes:r[15], deps:[]
     });
   });
+
+  /* Sample dependencies: [dependent, what it waits on]. Two of these start
+     before the thing they wait on finishes, which is exactly the sequencing
+     risk the timeline flags. */
+  [
+    ["HR virtual agent - tier 0 support",       "AI governance & model risk framework"],
+    ["Generative job architecture assistant",   "AI governance & model risk framework"],
+    ["Agentic HR case triage",                  "AI skills inference engine"],
+    ["Mobile HR experience enhancements",       "Manager self-service redesign"],
+    ["HR records & retention automation",       "HR data model & master data governance"],
+    ["AI skills inference engine",              "HR data model & master data governance"],
+    ["People analytics lakehouse",              "HR data model & master data governance"]
+  ].forEach(function(pair){
+    var from = S.entries.filter(function(e){ return e.title === pair[0]; })[0];
+    var on   = S.entries.filter(function(e){ return e.title === pair[1]; })[0];
+    if(from && on) from.deps.push({ref: on.id});
+  });
+  var tr = S.entries.filter(function(e){ return e.title === "Total rewards modernisation"; })[0];
+  if(tr) tr.deps.push({text: "Board approval of the reward strategy"});
+
   return S;
 }
 
@@ -1229,6 +1325,7 @@ var ui = {
   collapsed:{},
   filtersOpen:false,
   headerOpen:true,
+  showDeps:true,
   filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
@@ -1239,7 +1336,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1251,6 +1348,7 @@ function loadView(){
     if(v.collapsed && typeof v.collapsed === "object") ui.collapsed = v.collapsed;
     ui.filtersOpen = !!v.filtersOpen;
     if(typeof v.headerOpen === "boolean") ui.headerOpen = v.headerOpen;
+    if(typeof v.showDeps === "boolean") ui.showDeps = v.showDeps;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
@@ -1308,6 +1406,7 @@ function normalise(S){
     e.sq = clampQ(e.sq); e.eq = clampQ(e.eq);
     e.sy = clampYear(e.sy, S.config.startYear); e.ey = clampYear(e.ey, e.sy);
     e.milestone = !!e.milestone; e.spotlight = !!e.spotlight;
+    e.deps = normaliseDeps(e, S);
   });
   seedOrder(S);
   return true;
@@ -1345,6 +1444,32 @@ function groupEntries(laneId, subLaneId){
     return (e.laneId||null) === (laneId||null) && (e.subLaneId||null) === sub;
   }).sort(sortEntries);
 }
+/* A dependency is either a pointer at another initiative or a line of text
+   for something outside the roadmap. Anything else - a self-reference, a
+   pointer at an initiative that has been deleted, a duplicate - is dropped
+   on load rather than left to fail quietly later. */
+function normaliseDeps(e, S){
+  if(!Array.isArray(e.deps)) return [];
+  var seen = {}, out = [];
+  e.deps.forEach(function(d){
+    if(typeof d === "string") d = {ref: d};          /* an older, flatter shape */
+    if(!d || typeof d !== "object") return;
+    if(d.ref){
+      if(d.ref === e.id) return;                     /* nothing depends on itself */
+      var exists = S.entries.some(function(x){ return x.id === d.ref; });
+      if(!exists || seen["r:"+d.ref]) return;
+      seen["r:"+d.ref] = 1;
+      out.push({ref: d.ref});
+    }else if(d.text){
+      var t = String(d.text).trim().slice(0, 140);
+      if(!t || seen["t:"+t.toLowerCase()]) return;
+      seen["t:"+t.toLowerCase()] = 1;
+      out.push({text: t});
+    }
+  });
+  return out;
+}
+
 /* Legacy payloads keyed behaviour off the status name. Map once, then
    never look at the name again. */
 function kindFromName(name){
@@ -1424,6 +1549,46 @@ function toast(msg, opts){
 }
 function esc(s){ return String(s==null?"":s); }
 
+/* ---- Dependencies ---- */
+function depTargets(e){
+  return (e.deps || []).map(function(d){
+    return d.ref ? {ref: d.ref, target: byId(state.entries, d.ref)} : {text: d.text};
+  }).filter(function(d){ return d.text || d.target; });
+}
+function dependentsOf(e){
+  return state.entries.filter(function(x){
+    return (x.deps || []).some(function(d){ return d.ref === e.id; });
+  });
+}
+function startCol(e){ return colIndex(e.sy, e.sq); }
+function endCol(e){ return e.milestone ? startCol(e) : colIndex(e.ey, e.eq); }
+
+/* A link is "tight" when the dependent starts before what it waits on
+   finishes. Overlap is common and not always wrong, so it is flagged
+   rather than blocked. */
+function depIsTight(pred, succ){ return endCol(pred) > startCol(succ); }
+
+function tightDepCount(e){
+  return depTargets(e).filter(function(d){
+    return d.target && depIsTight(d.target, e);
+  }).length;
+}
+
+/* Adding "succ waits on pred" closes a loop only if pred already waits on
+   succ, directly or through others. */
+function wouldCycle(succId, predId){
+  var seen = {};
+  function walk(id){
+    if(id === succId) return true;
+    if(seen[id]) return false;
+    seen[id] = 1;
+    var e = byId(state.entries, id);
+    if(!e) return false;
+    return (e.deps || []).some(function(d){ return d.ref && walk(d.ref); });
+  }
+  return walk(predId);
+}
+
 function statusOf(e){ return byId(state.statuses, e.statusId); }
 function kindOf(e){
   var st = statusOf(e);
@@ -1470,6 +1635,7 @@ function applyCollapse(){
       node.hidden = laneOff || subOff;
     }
   });
+  scheduleDepDraw();
 }
 function markGroup(node, collapsed){
   node.toggleAttribute("data-collapsed", collapsed);
@@ -1612,6 +1778,7 @@ function applyMetrics(){
     g.style.setProperty("--label-w", ui.labelW+"px");
     g.style.setProperty("--colw", ui.colw+"px");
   });
+  scheduleDepDraw();
 }
 /* Pixels per quarter, as actually drawn - what the drag maths needs. */
 function colWidth(){ return ui.colw || ui.zoom; }
@@ -1774,7 +1941,12 @@ function matchesFilters(e){
       nameOf(state.owners,e.ownerId), nameOf(state.platforms,e.platformId),
       nameOf(state.themes,e.themeId), nameOf(state.lanes,e.laneId),
       nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId),
-      nameOf(state.priorities,e.priorityId)
+      nameOf(state.priorities,e.priorityId),
+      (e.deps||[]).map(function(d){
+        if(d.text) return d.text;
+        var t = byId(state.entries, d.ref);
+        return t ? t.title : "";
+      }).join(" ")
     ].join(" ").toLowerCase();
     if(hay.indexOf(ui.search.toLowerCase())<0) return false;
   }
@@ -1819,6 +1991,10 @@ function entryRow(e, childOf){
   var row = el("div","grow"+(childOf?" child":""));
   row.setAttribute("data-id", e.id);
   row.style.setProperty("--lane", color);
+  if(!childOf){
+    row.addEventListener("mouseenter", function(){ focusDeps(e.id); });
+    row.addEventListener("mouseleave", function(){ focusDeps(null); });
+  }
 
   var lab = el("div","gcell-label");
   lab.tabIndex = 0;
@@ -1850,6 +2026,19 @@ function entryRow(e, childOf){
     title.appendChild(flag);
   }
   title.appendChild(el("span",null,e.title));
+
+  var deps = depTargets(e);
+  if(deps.length){
+    var tight = tightDepCount(e);
+    var flag = el("span","deplink-flag"+(tight?" tight":""));
+    flag.title = deps.length + " dependenc" + (deps.length===1?"y":"ies") +
+                 (tight ? " · " + tight + " start before what they wait on finishes" : "");
+    flag.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">'+
+      '<path d="M10 13a5 5 0 007.1 0l3-3a5 5 0 00-7.1-7.1l-1.7 1.7"/>'+
+      '<path d="M14 11a5 5 0 00-7.1 0l-3 3a5 5 0 007.1 7.1l1.7-1.7"/></svg>' +
+      '<span>' + deps.length + '</span>';
+    title.appendChild(flag);
+  }
   text.appendChild(title);
 
   var bits = [];
@@ -1975,7 +2164,28 @@ function renderDetail(){
   host.appendChild(body);
   applyCollapse();
   syncCollapseAllButton();
+  scheduleDepDraw();
   renderLegend($("#detail-legend"));
+}
+
+/* A miniature of the link line, so the legend matches what is drawn. */
+function depSwatch(tight){
+  var svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 26 10");
+  svg.setAttribute("width","26"); svg.setAttribute("height","10");
+  svg.setAttribute("class","legendswatch");
+  svg.setAttribute("aria-hidden","true");
+  var g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","deplink"+(tight?" tight":""));
+  var p = document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d","M0,5 H18");
+  g.appendChild(p);
+  var a = document.createElementNS("http://www.w3.org/2000/svg","path");
+  a.setAttribute("class","arrow");
+  a.setAttribute("d","M24,5 l-6,-4 v8 z");
+  g.appendChild(a);
+  svg.appendChild(g);
+  return svg;
 }
 
 function renderLegend(host){
@@ -2028,7 +2238,131 @@ function renderLegend(host){
     g5.appendChild(el("strong",null,"Fold"));
     g5.appendChild(el("span","item","Click a lane or sub-category header to collapse it"));
     host.appendChild(g5);
+
+    var g6 = el("div","grp");
+    g6.appendChild(el("strong",null,"Links"));
+    var l1 = el("span","item");
+    l1.appendChild(depSwatch(false));
+    l1.appendChild(el("span",null,"Waits on"));
+    g6.appendChild(l1);
+    var l2 = el("span","item");
+    l2.appendChild(depSwatch(true));
+    l2.appendChild(el("span",null,"Starts before that one finishes"));
+    g6.appendChild(l2);
+    host.appendChild(g6);
   }
+}
+
+/* ============================================================
+   6a. Dependency links
+   Drawn as an SVG layer inside the timeline body, measured from the bars
+   themselves, so the routing follows whatever the grid actually did.
+   ============================================================ */
+var depFrame = null, depTimer = null;
+
+/* Coalesce redraws onto the next frame - but frames are not guaranteed.
+   Some embedded and print contexts suppress them entirely, and the links
+   would then never appear, so a timer races the frame and whichever
+   arrives first does the work. */
+function scheduleDepDraw(){
+  if(depFrame !== null || depTimer !== null) return;
+  function run(){
+    if(depFrame !== null){ cancelAnimationFrame(depFrame); depFrame = null; }
+    if(depTimer !== null){ clearTimeout(depTimer); depTimer = null; }
+    drawDepLinks();
+  }
+  depFrame = requestAnimationFrame(run);
+  depTimer = setTimeout(run, 32);
+}
+
+function barOf(id){
+  return document.querySelector('#detail-gantt .grow[data-id="'+id+'"] .gbar');
+}
+function rowVisible(id){
+  var row = document.querySelector('#detail-gantt .grow[data-id="'+id+'"]');
+  return !!row && !row.hidden;
+}
+
+function drawDepLinks(){
+  var body = $("#detail-gantt .gbody");
+  if(!body) return;
+  var svg = body.querySelector("svg.deplinks");
+
+  if(!ui.showDeps){
+    if(svg) svg.remove();
+    return;
+  }
+  if(!svg){
+    svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("class","deplinks");
+    svg.setAttribute("aria-hidden","true");
+    body.appendChild(svg);
+  }
+  var box = body.getBoundingClientRect();
+  var w = Math.max(body.scrollWidth, box.width);
+  var h = Math.max(body.scrollHeight, box.height);
+  svg.setAttribute("width", w);
+  svg.setAttribute("height", h);
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  state.entries.forEach(function(succ){
+    if(!rowVisible(succ.id)) return;
+    var sBar = barOf(succ.id);
+    if(!sBar) return;
+    (succ.deps || []).forEach(function(d){
+      if(!d.ref) return;
+      var pred = byId(state.entries, d.ref);
+      if(!pred || !rowVisible(pred.id)) return;
+      var pBar = barOf(pred.id);
+      if(!pBar) return;
+      svg.appendChild(linkPath(pBar, sBar, box, pred, succ));
+    });
+  });
+}
+
+/* Finish-to-start elbow. When the dependent starts to the left of where its
+   predecessor finishes, the line has to double back, so it drops into the
+   gap between the two rows before returning. */
+function linkPath(pBar, sBar, box, pred, succ){
+  var p = pBar.getBoundingClientRect(), q = sBar.getBoundingClientRect();
+  var fx = p.right - box.left, fy = p.top + p.height/2 - box.top;
+  var tx = q.left  - box.left, ty = q.top + q.height/2 - box.top;
+  var g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  var tight = depIsTight(pred, succ);
+  g.setAttribute("class", "deplink" + (tight ? " tight" : ""));
+  g.setAttribute("data-from", pred.id);
+  g.setAttribute("data-to", succ.id);
+
+  var d;
+  var pad = 11;
+  if(tx - fx >= pad * 2){
+    d = "M"+fx+","+fy+" H"+(fx+pad)+" V"+ty+" H"+(tx-4);
+  }else{
+    var midY = fy + (ty - fy) / 2;
+    d = "M"+fx+","+fy+" H"+(fx+pad)+" V"+midY+
+        " H"+(tx-pad)+" V"+ty+" H"+(tx-4);
+  }
+  var path = document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d", d);
+  g.appendChild(path);
+
+  var head = document.createElementNS("http://www.w3.org/2000/svg","path");
+  head.setAttribute("class","arrow");
+  head.setAttribute("d", "M"+tx+","+ty+" l-6,-4 v8 z");
+  g.appendChild(head);
+  return g;
+}
+
+/* Hovering a row lifts its own links out of the rest. */
+function focusDeps(id){
+  var svg = document.querySelector("#detail-gantt svg.deplinks");
+  if(!svg) return;
+  svg.classList.toggle("has-focus", !!id);
+  Array.prototype.slice.call(svg.querySelectorAll(".deplink")).forEach(function(g){
+    var on = id && (g.getAttribute("data-from") === id || g.getAttribute("data-to") === id);
+    g.classList.toggle("hot", !!on);
+  });
 }
 
 /* ============================================================
@@ -2253,6 +2587,7 @@ function startBarDrag(ev, entry, bar, mode){
     }
     barDrag.s = ns; barDrag.e = ne;
     bar.style.gridColumn = (ns+1) + " / " + (ne+2);
+    scheduleDepDraw();          /* the links follow the bar as it moves */
 
     var a = colToPeriod(ns), b = colToPeriod(ne);
     badge.textContent = entry.milestone
@@ -3114,6 +3449,7 @@ function fillQuarters(sel, selected){
 
 var editingEntryId = null;
 var entryMode = "view";
+var draftDeps = [];      /* the dialog edits a copy; save writes it back */
 
 function syncSubLaneField(selectedSub){
   var lane = byId(state.lanes, $("#e-lane").value);
@@ -3172,8 +3508,124 @@ function populateEntryForm(id){
   $("#e-milestone").checked = e ? !!e.milestone : false;
   $("#e-spotlight").checked = e ? !!e.spotlight : false;
   $("#e-notes").value = e ? (e.notes||"") : "";
+  draftDeps = e ? JSON.parse(JSON.stringify(e.deps || [])) : [];
+  renderDepEditor();
   syncMilestoneField();
   syncLaneChip();
+}
+
+/* ---- Dependencies inside the initiative sheet ---- */
+function renderDepEditor(){
+  var host = $("#e-deps-list");
+  host.innerHTML = "";
+  $("#e-dep-err").classList.remove("show");
+
+  var self = editingEntryId ? byId(state.entries, editingEntryId) : null;
+  /* While editing, judge tightness against the dates in the form, not the
+     stored ones, so the warning tracks what you are about to save. */
+  var probe = {
+    sy:Number($("#e-start-year").value)||state.config.startYear,
+    sq:Number($("#e-start-q").value)||1,
+    milestone:$("#e-milestone").checked
+  };
+
+  draftDeps.forEach(function(d, i){
+    var chip = el("div","depchip");
+    if(d.ref){
+      var t = byId(state.entries, d.ref);
+      if(!t){ return; }
+      var lane = byId(state.lanes, t.laneId);
+      var sub = byId(state.subLanes, t.subLaneId);
+      chip.style.setProperty("--lane", (sub && sub.color) || (lane && lane.color) || "#787877");
+      chip.appendChild(el("i"));
+      var label = el("span","t", t.title);
+      chip.appendChild(label);
+      if(depIsTight(t, probe)){
+        chip.classList.add("tight");
+        chip.appendChild(el("span","why","ends "+periodLabel(t.ey,t.eq)));
+      }
+      chip.classList.add("link");
+      chip.title = "Open " + t.title;
+      chip.addEventListener("click", function(ev){
+        if(ev.target.closest("button")) return;
+        openEntryDialog(t.id);
+      });
+    }else{
+      chip.classList.add("external");
+      chip.appendChild(el("span","t", d.text));
+      chip.title = "Outside the roadmap";
+    }
+    var rm = document.createElement("button");
+    rm.type = "button";
+    rm.setAttribute("aria-label","Remove this dependency");
+    rm.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    rm.addEventListener("click", function(ev){
+      ev.stopPropagation();
+      draftDeps.splice(i,1);
+      renderDepEditor();
+    });
+    chip.appendChild(rm);
+    host.appendChild(chip);
+  });
+
+  if(!draftDeps.length){
+    host.appendChild(el("span","depsep","Nothing yet."));
+  }
+
+  /* What is waiting on this one - read-only, and only once it exists. */
+  var needed = $("#e-dep-needed");
+  needed.innerHTML = "";
+  if(self){
+    var users = dependentsOf(self);
+    if(users.length){
+      needed.appendChild(el("strong",null,"Required by"));
+      users.forEach(function(u){
+        var chip = el("div","depchip link");
+        var lane = byId(state.lanes, u.laneId);
+        chip.style.setProperty("--lane", (lane && lane.color) || "#787877");
+        chip.appendChild(el("i"));
+        chip.appendChild(el("span","t", u.title));
+        chip.addEventListener("click", function(){ openEntryDialog(u.id); });
+        needed.appendChild(chip);
+      });
+    }
+  }
+
+  /* Offer every initiative that is not already linked and cannot close a loop. */
+  var pick = $("#e-dep-pick");
+  var taken = {};
+  draftDeps.forEach(function(d){ if(d.ref) taken[d.ref] = 1; });
+  var options = state.entries.filter(function(x){
+    if(x.id === editingEntryId || taken[x.id]) return false;
+    return !(editingEntryId && wouldCycle(editingEntryId, x.id));
+  }).slice().sort(function(a,b){ return a.title.localeCompare(b.title); })
+    .map(function(x){ return {id:x.id, name:x.title}; });   /* fillSelect reads .name */
+  fillSelect(pick, options, {placeholder:"— an initiative on this roadmap —", selected:""});
+  pick.disabled = !options.length;
+}
+
+function addDepRef(){
+  var id = $("#e-dep-pick").value;
+  var err = $("#e-dep-err");
+  if(!id){ err.textContent = "Choose an initiative first."; err.classList.add("show"); return; }
+  if(editingEntryId && wouldCycle(editingEntryId, id)){
+    err.textContent = "That would make the two wait on each other.";
+    err.classList.add("show"); return;
+  }
+  draftDeps.push({ref:id});
+  renderDepEditor();
+}
+function addDepText(){
+  var input = $("#e-dep-text");
+  var t = input.value.trim().slice(0,140);
+  var err = $("#e-dep-err");
+  if(!t){ err.textContent = "Describe what this is waiting on."; err.classList.add("show"); return; }
+  if(draftDeps.some(function(d){ return d.text && d.text.toLowerCase() === t.toLowerCase(); })){
+    err.textContent = "That one is already listed."; err.classList.add("show"); return;
+  }
+  draftDeps.push({text:t});
+  input.value = "";
+  renderDepEditor();
 }
 
 /* The lane / sub-category badge under the dialog title. */
@@ -3243,7 +3695,8 @@ function saveEntry(){
     progress: Number($("#e-progress").value)||0,
     milestone: milestone,
     spotlight: $("#e-spotlight").checked,
-    notes: $("#e-notes").value.trim()
+    notes: $("#e-notes").value.trim(),
+    deps: draftDeps.slice()
   };
 
   var wasEditing = !!editingEntryId;
@@ -3286,8 +3739,15 @@ function deleteEntry(id){
   var e = byId(state.entries, id);
   if(!e) return;
   if($("#dlg-entry").open) $("#dlg-entry").close();
-  ask("Remove “"+e.title+"”?", "This takes the initiative off the roadmap. It cannot be undone.", "Remove", function(){
+  var needed = dependentsOf(e).length;
+  var msg = "This takes the initiative off the roadmap. It cannot be undone.";
+  if(needed) msg += "\n\n" + needed + " initiative" + (needed===1?" depends":"s depend") +
+                    " on it; those links are removed too.";
+  ask("Remove “"+e.title+"”?", msg, "Remove", function(){
     state.entries = state.entries.filter(function(x){ return x.id!==id; });
+    state.entries.forEach(function(x){
+      x.deps = (x.deps || []).filter(function(d){ return d.ref !== id; });
+    });
     commit("Initiative removed");
   });
 }
@@ -3466,6 +3926,17 @@ function setHeaderOpen(open){
   applyMetrics();
 }
 
+function setShowDeps(on){
+  ui.showDeps = !!on;
+  var b = $("#btn-deps");
+  b.setAttribute("aria-pressed", ui.showDeps ? "true" : "false");
+  b.setAttribute("aria-label", ui.showDeps ? "Hide dependency links" : "Show dependency links");
+  b.title = ui.showDeps ? "Hide dependency links" : "Show dependency links";
+  b.classList.toggle("btn-quiet", true);
+  saveView();
+  scheduleDepDraw();
+}
+
 function setFiltersOpen(open){
   ui.filtersOpen = !!open;
   $("#btn-more-filters").setAttribute("aria-expanded", ui.filtersOpen ? "true" : "false");
@@ -3540,6 +4011,7 @@ function wire(){
   $("#btn-header").addEventListener("click", function(){
     setHeaderOpen(this.getAttribute("aria-expanded") !== "true");
   });
+  $("#btn-deps").addEventListener("click", function(){ setShowDeps(!ui.showDeps); });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
   $("#btn-collapse-lanes").addEventListener("click", toggleAllLanes);
   $("#toast-undo").addEventListener("click", function(){
@@ -3595,6 +4067,15 @@ function wire(){
     $("#e-title").select();
   });
   $("#e-cancel").addEventListener("click", cancelEntryEdit);
+  $("#e-dep-add").addEventListener("click", addDepRef);
+  $("#e-dep-add-text").addEventListener("click", addDepText);
+  $("#e-dep-text").addEventListener("keydown", function(ev){
+    if(ev.key === "Enter"){ ev.preventDefault(); addDepText(); }
+  });
+  /* The tight-link warning should track the dates being edited. */
+  ["e-start-year","e-start-q","e-milestone"].forEach(function(id){
+    $("#"+id).addEventListener("change", renderDepEditor);
+  });
   $("#e-duplicate").addEventListener("click", duplicateEntry);
   $("#e-remove-view").addEventListener("click", function(){
     if(editingEntryId) deleteEntry(editingEntryId);
@@ -3701,6 +4182,7 @@ loadView();
 wire();
 setFiltersOpen(ui.filtersOpen);
 setHeaderOpen(ui.headerOpen);
+setShowDeps(ui.showDeps);
 renderAll();
 setView(String(location.hash).replace("#","") || "detail", true);
 save();
