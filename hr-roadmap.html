@@ -276,21 +276,36 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .grow:hover .gcell-label{background:var(--surface-warm)}
 .grow:hover .gtrack{background-color:rgba(244,236,224,.45)}
 
-/* Lane / section header rows - tonal bands, no hard rules */
+/* Lane / section header rows.
+   Each band is mixed from its own lane colour over a neutral floor, so it
+   reads as that lane's band rather than as one more white row. Mixing over
+   --surface-sunk (rather than white) keeps every band the same visual
+   weight whether the lane colour is Canyon or Mineral. The first
+   declaration in each pair is the fallback where color-mix is missing. */
 .glane{
   display:grid;grid-template-columns:var(--label-w) max-content;
-  background:var(--surface-soft);
+  background:var(--surface-sunk);
+  background:color-mix(in srgb, var(--lane, var(--ink)) 20%, var(--surface-sunk));
+  border-top:1px solid var(--outline);
+  border-top-color:color-mix(in srgb, var(--lane, var(--ink)) 40%, var(--outline));
 }
+.gbody > .glane:first-child{border-top:0}
 .glane-label{
-  position:sticky;left:0;z-index:4;background:var(--surface-soft);
+  position:sticky;left:0;z-index:4;background-color:inherit;
   display:flex;align-items:center;gap:9px;padding:13px 16px 11px 8px;
   cursor:pointer;
 }
-.glane-label:hover{background:var(--surface-warm)}
+.glane-label:hover{
+  background:var(--surface-warm);
+  background:color-mix(in srgb, var(--lane, var(--ink)) 34%, var(--surface-sunk));
+}
 /* Collapsed groups stay in the DOM and are only hidden, so a drag can
    spring one open without a re-render tearing out the row being dragged. */
 .grow[hidden],.gsub[hidden]{display:none!important}
-.glane[data-collapsed] .glane-label{background:var(--surface-warm)}
+.glane[data-collapsed] .glane-label{
+  background:var(--surface-warm);
+  background:color-mix(in srgb, var(--lane, var(--ink)) 30%, var(--surface-sunk));
+}
 .glane:not([data-collapsed]) .gbar.summary,
 .gsub:not([data-collapsed]) .gbar.summary{display:none}
 .glane-track,.gsub-track{align-items:center;padding:5px 0}
@@ -299,7 +314,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   background:var(--lane,var(--ink));
 }
 .glane-label h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
-.glane-track{background:var(--surface-soft);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.glane-track{background-color:inherit;display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 .glane-count{
   margin-left:auto;font-size:11px;font-weight:700;color:var(--ink-soft);
   background:var(--surface);border-radius:var(--r-pill);padding:2px 10px;box-shadow:var(--elev-1);
@@ -308,21 +323,32 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .gsub{
   display:grid;grid-template-columns:var(--label-w) max-content;
   background:var(--surface);
+  background:color-mix(in srgb, var(--lane, var(--gray)) 11%, var(--surface));
 }
 .gsub-label{
-  position:sticky;left:0;z-index:4;background:var(--surface);
+  position:sticky;left:0;z-index:4;background-color:inherit;
   display:flex;align-items:center;gap:7px;padding:7px 16px 5px 24px;
   font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
   cursor:pointer;
 }
-.gsub-label:hover{background:var(--surface-sunk)}
-.gsub[data-collapsed] .gsub-label{background:var(--surface-sunk)}
+.gsub-label:hover{
+  background:var(--surface-sunk);
+  background:color-mix(in srgb, var(--lane, var(--gray)) 22%, var(--surface));
+}
+.gsub[data-collapsed] .gsub-label{
+  background:var(--surface-sunk);
+  background:color-mix(in srgb, var(--lane, var(--gray)) 20%, var(--surface));
+}
 .glane-label .disclose,.gsub-label .disclose{margin:0}
 .glane-count{transition:none}
 .gsub-label::before{content:"";width:7px;height:7px;border-radius:var(--r-pill);background:var(--lane,var(--gray));flex:0 0 auto}
-.gsub-track{background:var(--surface);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.gsub-track{background-color:inherit;display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 
 /* Initiative label cell */
+.grow .gcell-label{
+  box-shadow:inset 3px 0 0 var(--lane, transparent);
+  box-shadow:inset 3px 0 0 color-mix(in srgb, var(--lane, transparent) 55%, transparent);
+}
 .gcell-label{
   position:sticky;left:0;z-index:3;background:var(--surface);
   border-right:1px solid var(--outline-soft);
@@ -1579,7 +1605,7 @@ function laneRow(lane, count, opts){
   if(lane.id) row.setAttribute("data-lane", lane.id);
   if(lane.hasSubLanes) row.setAttribute("data-haskids", "1");
   var lab = el("div","glane-label");
-  lab.style.setProperty("--lane", lane.color);
+  row.style.setProperty("--lane", lane.color);
 
   if(opts.key){
     row.setAttribute("data-key", opts.key);
@@ -1609,7 +1635,7 @@ function subRow(sub, laneId, opts){
     lab.addEventListener("click", function(){ toggleCollapsed(opts.key); });
   }
   lab.appendChild(el("span",null,sub.name));
-  lab.style.setProperty("--lane", sub.color);
+  row.style.setProperty("--lane", sub.color);
   row.appendChild(lab);
 
   var track = makeTrack("gsub-track");
@@ -1724,6 +1750,7 @@ function entryRow(e, childOf){
 
   var row = el("div","grow"+(childOf?" child":""));
   row.setAttribute("data-id", e.id);
+  row.style.setProperty("--lane", color);
 
   var lab = el("div","gcell-label");
   lab.tabIndex = 0;
