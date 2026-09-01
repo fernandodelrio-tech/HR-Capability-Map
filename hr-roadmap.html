@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>HR Technology Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" />
 <style>
 /* ============================================================
    Cummins brand tokens - Cummins Brand Book 2025 palette.
@@ -46,19 +49,47 @@
   --mist:#D7DDB9;
   --mist-light:#E8E9DA;
 
-  --font-display:"Cummins Innova Display","Cummins Innova",Aptos,Roboto,"Segoe UI",system-ui,Arial,sans-serif;
-  --font-text:"Cummins Innova Text","Cummins Innova",Aptos,Roboto,"Segoe UI",system-ui,Arial,sans-serif;
+  /* ---- Soft surface system ----
+     Material-style tonal surfaces and rounded shapes, built from approved
+     Cummins values: Asphalt for ink rather than pure black, Platinum for
+     outlines, Dune light and Tundra light as the warm and cool containers.
+     The hues are the brand's; only the shaping and the elevation are new. */
+  --ink:#2A2A2A;                 /* Asphalt - softer than #000 for body text */
+  --ink-soft:#474747;            /* Dark gray - secondary text */
+  --surface:#FFFFFF;             /* cards, panes, rows */
+  --surface-soft:#FBFAF8;        /* app ground behind the cards */
+  --surface-warm:#F4ECE0;        /* Dune light - warm tonal container */
+  --surface-cool:#E7EEF2;        /* Tundra light - cool tonal container */
+  --surface-sunk:#F3F1ED;        /* input wells, hover fills */
+  --outline:#E0E0DF;             /* Platinum */
+  --outline-soft:#F0EEEB;        /* hairlines inside a surface */
+
+  /* Shape */
+  --r-xs:8px;
+  --r-sm:12px;
+  --r-md:16px;
+  --r-lg:24px;
+  --r-xl:28px;
+  --r-pill:999px;
+
+  /* Elevation - low, wide and warm rather than hard drop shadows */
+  --elev-1:0 1px 2px rgba(42,42,42,.05),0 1px 3px rgba(42,42,42,.04);
+  --elev-2:0 2px 4px rgba(42,42,42,.05),0 4px 12px rgba(42,42,42,.06);
+  --elev-3:0 4px 10px rgba(42,42,42,.07),0 16px 40px rgba(42,42,42,.10);
+
+  --font-display:"Google Sans Display","Google Sans",Figtree,"Cummins Innova Display",Aptos,Roboto,system-ui,sans-serif;
+  --font-text:"Google Sans Text","Google Sans",Figtree,"Cummins Innova Text",Aptos,Roboto,system-ui,sans-serif;
 
   /* Layout */
   --label-w:368px;      /* runtime default; the gantts override it per view */
   --label-w-min:220px;
   --label-w-max:680px;
   --colw:72px;
-  --row-h:38px;
-  --bar-h:24px;
-  --line:#EDEDEC;
-  --line-strong:#C9C9C7;
-  --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --row-h:44px;
+  --bar-h:26px;
+  --line:var(--outline-soft);
+  --line-strong:var(--outline);
+  --shadow:var(--elev-3);
 }
 
 *{box-sizing:border-box}
@@ -67,23 +98,23 @@ body{
   margin:0;
   font-family:var(--font-text);
   font-size:14px;
-  line-height:1.45;
-  color:var(--black);
-  background:var(--white);
+  line-height:1.5;
+  color:var(--ink);
+  background:var(--surface-soft);
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;margin:0;letter-spacing:-.01em}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;margin:0;letter-spacing:-.012em;text-wrap:balance}
 button,input,select,textarea{font:inherit;color:inherit}
 /* Controls sit on white surfaces, so they state their own colour rather than
    trusting an inherited one. */
-.control,.btn,.segmented button{color:var(--black)}
-.btn-primary{color:var(--white)}
+.control,.btn,.segmented button{color:var(--ink)}
+.btn-primary,.btn-primary:hover{color:var(--white)}
 .btn-danger{color:var(--red)}
-.btn-danger:hover,.btn-primary:hover{color:var(--white)}
-.btn:hover{color:var(--white)}
-.btn-quiet{color:var(--dark-gray)}
-.btn-quiet:hover{color:var(--black)}
-:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.btn-danger:hover{color:var(--white)}
+.btn-quiet{color:var(--ink-soft)}
+.btn-quiet:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:var(--r-xs)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 
 /* ---------- App shell ---------- */
 /* The shell is exactly one viewport tall and never scrolls itself: the
@@ -92,33 +123,36 @@ button,input,select,textarea{font:inherit;color:inherit}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 
 .topbar{
-  background:var(--black);color:var(--white);
-  display:flex;align-items:center;gap:24px;
-  padding:0 24px;min-height:64px;flex-wrap:wrap;
+  background:var(--surface);color:var(--ink);
+  display:flex;align-items:center;gap:20px;
+  padding:10px 20px;min-height:64px;flex-wrap:wrap;flex:0 0 auto;
+  border-bottom:1px solid var(--outline-soft);
 }
 .brandslot{
   display:flex;align-items:center;justify-content:center;
-  width:120px;height:30px;flex:0 0 auto;
-  border:1px dashed rgba(255,255,255,.42);border-radius:2px;
+  width:118px;height:32px;flex:0 0 auto;
+  border:1px dashed var(--outline);border-radius:var(--r-xs);
   font-size:9px;letter-spacing:.16em;text-transform:uppercase;
-  color:rgba(255,255,255,.62);white-space:nowrap;
+  color:var(--ink-soft);white-space:nowrap;background:var(--surface-soft);
 }
-.brandbar{width:1px;align-self:stretch;background:rgba(255,255,255,.18);margin:14px 0}
+.brandbar{width:1px;height:26px;background:var(--outline);flex:0 0 auto}
 .apptitle{font-family:var(--font-display);font-size:17px;font-weight:700;white-space:nowrap}
-.apptitle span{color:var(--silver);font-weight:400;margin-left:10px;font-size:13px;font-family:var(--font-text)}
+.apptitle span{
+  color:var(--ink-soft);font-weight:500;margin-left:10px;font-size:12px;font-family:var(--font-text);
+  background:var(--surface-warm);border-radius:var(--r-pill);padding:3px 10px;
+}
 
-.tabs{display:flex;gap:2px;margin-left:auto;align-self:stretch;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs{display:flex;gap:6px;margin-left:auto;align-items:center;min-width:0;overflow-x:auto;scrollbar-width:none;padding:2px}
 .tabs::-webkit-scrollbar{display:none}
 .tab{
-  background:none;border:0;color:rgba(255,255,255,.72);
-  padding:0 18px;height:100%;min-height:64px;cursor:pointer;
-  font-size:14px;font-weight:600;position:relative;white-space:nowrap;
+  background:transparent;border:0;color:var(--ink-soft);
+  padding:0 18px;height:40px;cursor:pointer;border-radius:var(--r-pill);
+  font-size:14px;font-weight:600;white-space:nowrap;
+  transition:background .16s ease,color .16s ease;
 }
-.tab:hover{color:var(--white)}
-.tab[aria-selected="true"]{color:var(--white)}
-.tab[aria-selected="true"]::after{
-  content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;background:var(--red);
-}
+.tab:hover{background:var(--surface-sunk);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--red);color:var(--white)}
+.tab[aria-selected="true"]:hover{background:var(--redwood);color:var(--white)}
 
 main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 .view{display:none;flex:1;flex-direction:column;min-width:0;min-height:0}
@@ -126,73 +160,88 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
 /* ---------- Toolbar ---------- */
 .toolbar{
-  display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;flex:0 0 auto;
-  padding:16px 24px;border-bottom:1px solid var(--platinum);background:var(--white);
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;flex:0 0 auto;
+  padding:14px 20px;border-bottom:1px solid var(--outline-soft);background:var(--surface);
 }
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
-.field > label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dark-gray)}
+.field > label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
 .control{
-  height:36px;padding:0 10px;border:1px solid var(--light-gray);border-radius:2px;
-  background:var(--white);min-width:130px;
+  height:40px;padding:0 12px;border:1px solid transparent;border-radius:var(--r-sm);
+  background:var(--surface-sunk);min-width:130px;
+  transition:background .14s ease,border-color .14s ease;
 }
+.control:hover{background:var(--surface-warm)}
+.control:focus{background:var(--surface);border-color:var(--outline)}
 select.control{padding-right:6px;cursor:pointer}
 /* A select sizes to its longest option, which lets one long lane name push
    the whole toolbar onto a second row. Cap it and let the text truncate. */
-.toolbar select.control{max-width:184px}
-.search{max-width:220px}
+.toolbar select.control{max-width:168px}
+.search{max-width:196px}
+.toolbar .btn{padding:0 16px}
 input.control::placeholder{color:var(--gray)}
+textarea.control:hover{background:var(--surface-sunk)}
 .search{min-width:230px}
 .toolbar-spacer{margin-left:auto}
-.toolbar-secondary{background:var(--dune-light);padding-top:12px;padding-bottom:12px}
+.toolbar-secondary{background:var(--surface-soft);padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--outline-soft)}
 .toolbar-secondary[hidden]{display:none}
 .badge{
   display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
-  padding:0 5px;border-radius:9px;background:var(--red);color:var(--white);
+  padding:0 6px;border-radius:var(--r-pill);background:var(--red);color:var(--white);
   font-size:11px;font-weight:700;margin-left:2px;
 }
 .badge[hidden]{display:none}
 .btn .chev{transition:transform .15s ease}
 .btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
-.checkline{display:flex;align-items:center;gap:8px;height:36px;font-size:13px;cursor:pointer;white-space:nowrap}
-.checkline input{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
-
-.btn{
-  height:36px;padding:0 16px;border-radius:2px;border:1px solid var(--black);
-  background:var(--white);color:var(--black);font-weight:600;font-size:13px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+.checkline{
+  display:flex;align-items:center;gap:9px;height:40px;font-size:13px;cursor:pointer;
+  white-space:nowrap;padding:0 12px;border-radius:var(--r-pill);
 }
-.btn:hover{background:var(--black);color:var(--white)}
-.btn-primary{background:var(--red);border-color:var(--red);color:var(--white)}
-.btn-primary:hover{background:var(--redwood);border-color:var(--redwood);color:var(--white)}
-.btn-quiet{border-color:var(--light-gray);color:var(--dark-gray)}
-.btn-quiet:hover{background:var(--platinum);color:var(--black);border-color:var(--gray)}
-.btn-danger{border-color:var(--red);color:var(--red)}
-.btn-danger:hover{background:var(--red);color:var(--white)}
-.btn-sm{height:28px;padding:0 10px;font-size:12px}
-.btn-icon{width:28px;height:28px;padding:0;justify-content:center;border-color:var(--light-gray)}
+.checkline:hover{background:var(--surface-sunk)}
+.checkline input{width:17px;height:17px;accent-color:var(--red);cursor:pointer;border-radius:4px}
+
+/* Filled tonal by default, pill-shaped throughout. */
+.btn{
+  height:40px;padding:0 18px;border-radius:var(--r-pill);border:1px solid transparent;
+  background:var(--surface-sunk);color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease;
+}
+.btn:hover{background:var(--surface-warm)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--red);color:var(--white);box-shadow:var(--elev-1)}
+.btn-primary:hover{background:var(--redwood);color:var(--white);box-shadow:var(--elev-2)}
+.btn-quiet{background:transparent;border-color:var(--outline);color:var(--ink-soft)}
+.btn-quiet:hover{background:var(--surface-sunk);color:var(--ink);border-color:var(--outline)}
+.btn-danger{background:transparent;border-color:var(--outline);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+.btn-sm{height:32px;padding:0 14px;font-size:12px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center}
 .btn svg{width:15px;height:15px;flex:0 0 auto}
 
-.segmented{display:inline-flex;border:1px solid var(--light-gray);border-radius:2px;overflow:hidden;height:36px}
-.segmented button{
-  border:0;background:var(--white);padding:0 12px;font-size:12px;font-weight:600;
-  color:var(--dark-gray);cursor:pointer;border-right:1px solid var(--light-gray);
+.segmented{
+  display:inline-flex;background:var(--surface-sunk);border-radius:var(--r-pill);
+  height:40px;padding:4px;gap:2px;
 }
-.segmented button:last-child{border-right:0}
-.segmented button[aria-pressed="true"]{background:var(--asphalt);color:var(--white)}
-.segmented button:hover:not([aria-pressed="true"]){background:var(--platinum)}
+.segmented button{
+  border:0;background:transparent;padding:0 14px;font-size:12px;font-weight:600;
+  color:var(--ink-soft);cursor:pointer;border-radius:var(--r-pill);
+  transition:background .16s ease,color .16s ease;
+}
+.segmented button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--elev-1)}
+.segmented button:hover:not([aria-pressed="true"]){color:var(--ink)}
 
 /* ---------- Gantt ---------- */
-.scroller{flex:1;overflow:auto;min-height:0;background:var(--white)}
+.scroller{flex:1;overflow:auto;min-height:0;background:var(--surface)}
 .gantt{width:max-content;min-width:100%;padding-bottom:56px}
 
 .ghead{
-  position:sticky;top:0;z-index:6;background:var(--white);
+  position:sticky;top:0;z-index:6;background:var(--surface);
   display:grid;grid-template-columns:var(--label-w) max-content;
-  border-bottom:2px solid var(--black);
+  border-bottom:1px solid var(--outline);
 }
 .ghead-label{
-  position:sticky;left:0;z-index:7;background:var(--white);
-  border-right:1px solid var(--platinum);
+  position:sticky;left:0;z-index:7;background:var(--surface);
+  border-right:1px solid var(--outline-soft);
   display:flex;align-items:flex-end;padding:10px 16px 8px;
   font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);
 }
@@ -200,72 +249,74 @@ input.control::placeholder{color:var(--gray)}
   position:absolute;top:0;right:-4px;width:9px;height:100%;z-index:9;
   cursor:col-resize;display:flex;align-items:center;justify-content:center;touch-action:none;
 }
-.col-resize::after{content:"";width:2px;height:56%;border-radius:1px;background:var(--light-gray);transition:all .12s ease}
+.col-resize::after{content:"";width:2px;height:56%;border-radius:var(--r-pill);background:var(--outline);transition:all .12s ease}
 .col-resize:hover::after,.col-resize.dragging::after{height:100%;background:var(--red);width:3px}
 body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:none}
 .ghead-time{display:flex;flex-direction:column}
 .grow-years,.grow-quarters{display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 .gyear{
-  grid-column:span 4;text-align:center;padding:9px 4px 7px;
-  font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.04em;
-  border-left:2px solid var(--light-gray);background:var(--white);
+  grid-column:span 4;text-align:center;padding:10px 4px 6px;
+  font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:.02em;
+  border-left:1px solid var(--outline);background:var(--surface);
 }
 .gyear:first-child{border-left:0}
 .gq{
-  text-align:center;padding:3px 2px 7px;font-size:10.5px;font-weight:600;color:var(--dark-gray);
-  border-left:1px solid var(--line);
+  text-align:center;padding:2px 2px 9px;font-size:10.5px;font-weight:600;color:var(--ink-soft);
+  border-left:1px solid var(--outline-soft);
 }
-.gq.q1{border-left:2px solid var(--light-gray)}
+.gq.q1{border-left:1px solid var(--outline)}
 .grow-quarters .gq:first-child{border-left:0}
 
 .gbody{position:relative}
 
 .grow{
   display:grid;grid-template-columns:var(--label-w) max-content;
-  border-bottom:1px solid var(--line);min-height:var(--row-h);
+  border-bottom:1px solid var(--outline-soft);min-height:var(--row-h);
 }
-.grow:hover .gcell-label{background:var(--tundra-light)}
-.grow:hover .gtrack{background-color:rgba(231,238,242,.5)}
+.grow:hover .gcell-label{background:var(--surface-warm)}
+.grow:hover .gtrack{background-color:rgba(244,236,224,.45)}
 
-/* Lane / section header rows */
+/* Lane / section header rows - tonal bands, no hard rules */
 .glane{
   display:grid;grid-template-columns:var(--label-w) max-content;
-  border-bottom:1px solid var(--light-gray);border-top:1px solid var(--light-gray);
-  background:var(--platinum);
+  background:var(--surface-soft);
 }
-.glane + .glane{border-top:0}
 .glane-label{
-  position:sticky;left:0;z-index:4;background:var(--platinum);
-  display:flex;align-items:center;gap:10px;padding:9px 16px;
-  border-right:1px solid var(--light-gray);border-left:5px solid var(--lane,var(--black));
+  position:sticky;left:0;z-index:4;background:var(--surface-soft);
+  display:flex;align-items:center;gap:11px;padding:13px 16px 11px 16px;
 }
-.glane-label h3{font-size:13px;letter-spacing:.03em;text-transform:uppercase}
-.glane-track{background:var(--platinum);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.glane-label::before{
+  content:"";width:10px;height:10px;border-radius:3px;flex:0 0 auto;
+  background:var(--lane,var(--ink));
+}
+.glane-label h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
+.glane-track{background:var(--surface-soft);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 .glane-count{
-  margin-left:auto;font-size:11px;font-weight:700;color:var(--dark-gray);
-  background:var(--white);border-radius:10px;padding:1px 9px;
+  margin-left:auto;font-size:11px;font-weight:700;color:var(--ink-soft);
+  background:var(--surface);border-radius:var(--r-pill);padding:2px 10px;box-shadow:var(--elev-1);
 }
 
 .gsub{
   display:grid;grid-template-columns:var(--label-w) max-content;
-  border-bottom:1px solid var(--line);background:var(--tundra-light);
+  background:var(--surface);
 }
 .gsub-label{
-  position:sticky;left:0;z-index:4;background:var(--tundra-light);
-  display:flex;align-items:center;gap:8px;padding:6px 16px 6px 30px;
-  border-right:1px solid var(--platinum);
-  font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dark-gray);
+  position:sticky;left:0;z-index:4;background:var(--surface);
+  display:flex;align-items:center;gap:8px;padding:8px 16px 4px 34px;
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
 }
-.gsub-label::before{content:"";width:8px;height:8px;background:var(--lane,var(--gray));flex:0 0 auto}
-.gsub-track{background:var(--tundra-light);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
+.gsub-label::before{content:"";width:7px;height:7px;border-radius:var(--r-pill);background:var(--lane,var(--gray));flex:0 0 auto}
+.gsub-track{background:var(--surface);display:grid;grid-template-columns:repeat(var(--cols),var(--colw))}
 
 /* Initiative label cell */
 .gcell-label{
-  position:sticky;left:0;z-index:3;background:var(--white);
-  border-right:1px solid var(--platinum);
-  padding:6px 14px 6px 30px;display:flex;flex-direction:column;justify-content:center;gap:2px;
-  cursor:pointer;min-width:0;
+  position:sticky;left:0;z-index:3;background:var(--surface);
+  border-right:1px solid var(--outline-soft);
+  padding:6px 14px 6px 8px;display:flex;flex-direction:column;justify-content:center;gap:1px;
+  cursor:pointer;min-width:0;transition:background .14s ease;
 }
+.gcell-label{flex-direction:row;align-items:center;gap:4px}
+.gcell-text{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0;flex:1}
 .gcell-title{
   font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;
   overflow:hidden;white-space:nowrap;min-width:0;
@@ -275,27 +326,29 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .gcell-meta{
   font-size:11px;color:var(--dark-gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.gcell-meta b{font-weight:600;color:var(--dark-gray)}
+.gcell-meta b{font-weight:600;color:var(--ink)}
 
 /* Track + bars */
 .gtrack{
   position:relative;display:grid;
   grid-template-columns:repeat(var(--cols),var(--colw));
-  align-items:center;padding:6px 0;
+  align-items:center;padding:8px 0;
   background-image:
-    repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px var(--colw)),
-    repeating-linear-gradient(to right,var(--light-gray) 0 2px,transparent 2px calc(var(--colw) * 4));
+    repeating-linear-gradient(to right,var(--outline-soft) 0 1px,transparent 1px var(--colw)),
+    repeating-linear-gradient(to right,var(--outline) 0 1px,transparent 1px calc(var(--colw) * 4));
   background-position:left top;
+  transition:background-color .14s ease;
 }
 .gbar{
-  grid-row:1;height:var(--bar-h);border-radius:2px;
+  grid-row:1;height:var(--bar-h);border-radius:var(--r-pill);
   background:var(--c,var(--gray));color:var(--fg,#fff);
-  display:flex;align-items:center;gap:6px;padding:0 8px;
+  display:flex;align-items:center;gap:7px;padding:0 12px;
   margin:0 3px;position:relative;cursor:pointer;overflow:hidden;
   font-size:11.5px;font-weight:600;line-height:1;
-  transition:filter .12s ease,transform .12s ease;
+  box-shadow:var(--elev-1);
+  transition:box-shadow .14s ease,transform .12s ease,filter .12s ease;
 }
-.gbar:hover{filter:brightness(1.12);transform:translateY(-1px);z-index:2}
+.gbar:hover{filter:brightness(1.06);box-shadow:var(--elev-2);z-index:2}
 .gbar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gbar .fill{
   position:absolute;inset:0 auto 0 0;width:var(--p,0%);
@@ -303,13 +356,13 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 }
 .gbar.on-hold{opacity:.55}
 .gbar.at-risk{box-shadow:inset 0 0 0 2px var(--red)}
-.gbar.overflow-l{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;
+.gbar.overflow-l{border-top-left-radius:3px;border-bottom-left-radius:3px;margin-left:0;
   -webkit-mask-image:linear-gradient(to right,transparent 0,#000 7px);mask-image:linear-gradient(to right,transparent 0,#000 7px)}
-.gbar.overflow-r{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;
+.gbar.overflow-r{border-top-right-radius:3px;border-bottom-right-radius:3px;margin-right:0;
   -webkit-mask-image:linear-gradient(to left,transparent 0,#000 7px);mask-image:linear-gradient(to left,transparent 0,#000 7px)}
 .gbar.milestone{
   width:var(--bar-h);min-width:var(--bar-h);padding:0;justify-self:start;margin-left:calc(var(--colw)/2 - var(--bar-h)/2);
-  transform:rotate(45deg);border-radius:2px;
+  transform:rotate(45deg);border-radius:6px;
 }
 .gbar.milestone:hover{transform:rotate(45deg) scale(1.12)}
 .gbar.milestone .lbl{display:none}
@@ -320,120 +373,187 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   box-shadow:0 0 0 1.5px color-mix(in srgb, var(--fg,#fff) 70%, transparent);
 }
 
-.today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none}
+/* ---------- Direct manipulation ----------
+   Two separate gestures, so neither can be triggered by accident:
+   the grip on the left of a row moves it between lanes and positions,
+   the bar itself moves and resizes in time. */
+.rowgrip{
+  flex:0 0 auto;width:22px;height:30px;padding:0;border:0;background:transparent;
+  border-radius:var(--r-xs);cursor:grab;color:var(--silver);touch-action:none;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .14s ease,background .14s ease,color .14s ease;
+}
+.grow:hover .rowgrip,.rowgrip:focus-visible{opacity:1}
+.rowgrip:hover{background:var(--surface-sunk);color:var(--ink)}
+.rowgrip:active{cursor:grabbing}
+.rowgrip svg{width:13px;height:13px;pointer-events:none}
+
+.grow.row-dragging{opacity:.4}
+.grow.row-dragging .gcell-label{background:var(--surface-warm)}
+body.row-dragging,body.row-dragging *{cursor:grabbing!important;user-select:none}
+
+.drop-line{
+  position:absolute;left:0;height:3px;border-radius:var(--r-pill);
+  background:var(--red);z-index:8;pointer-events:none;
+  box-shadow:0 0 0 3px rgba(218,41,28,.16);
+}
+.drop-line::before{
+  content:"";position:absolute;left:6px;top:50%;width:9px;height:9px;margin-top:-4.5px;
+  border-radius:var(--r-pill);background:var(--red);
+}
+
+/* Bar move + resize */
+.gbar{touch-action:none}
+.gbar:not(.milestone):not(.rollup){cursor:grab}
+.gbar.bar-dragging{cursor:grabbing;box-shadow:var(--elev-3);filter:brightness(1.08);z-index:9}
+body.bar-dragging,body.bar-dragging *{user-select:none}
+.rz{
+  position:absolute;top:0;bottom:0;width:12px;cursor:ew-resize;touch-action:none;
+  display:flex;align-items:center;justify-content:center;z-index:2;
+}
+.rz-l{left:0}
+.rz-r{right:0}
+.rz::after{
+  content:"";width:3px;height:12px;border-radius:var(--r-pill);
+  background:var(--fg,#fff);opacity:0;transition:opacity .14s ease;
+}
+.gbar:hover .rz::after,.gbar.bar-dragging .rz::after{opacity:.65}
+.gbar.overflow-l .rz-l,.gbar.overflow-r .rz-r{display:none}
+
+.dragbadge{
+  position:absolute;z-index:12;pointer-events:none;
+  background:var(--ink);color:var(--white);font-size:11px;font-weight:700;
+  padding:5px 11px;border-radius:var(--r-pill);white-space:nowrap;
+  box-shadow:var(--elev-2);transform:translate(-50%,-140%);
+}
+
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none;border-radius:var(--r-pill)}
 .today::after{
-  content:"Today";position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;
-  color:var(--red);background:var(--white);padding:0 4px;white-space:nowrap;
+  content:"Today";position:absolute;top:4px;left:6px;font-size:10px;font-weight:700;
+  color:var(--white);background:var(--red);padding:2px 8px;white-space:nowrap;border-radius:var(--r-pill);
 }
 
 .empty{padding:64px 24px;text-align:center;color:var(--dark-gray)}
-.empty h3{font-size:16px;color:var(--black);margin-bottom:6px}
+.empty h3{font-size:17px;color:var(--ink);margin-bottom:6px}
 .empty p{margin:0 0 16px}
 
 /* ---------- Executive view ---------- */
-.exec-head{padding:20px 24px 4px;flex:0 0 auto}
+.exec-head{padding:20px 20px 4px;flex:0 0 auto}
 .exec-head h2{font-size:24px;margin-bottom:4px}
-.exec-head p{margin:0;color:var(--dark-gray);max-width:78ch}
+.exec-head p{margin:0;color:var(--ink-soft);max-width:78ch}
 
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
-  background:var(--platinum);border:1px solid var(--platinum);margin:16px 24px 0;flex:0 0 auto}
-.kpi{background:var(--white);padding:14px 16px}
-.kpi .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;
+  margin:16px 20px 0;flex:0 0 auto}
+.kpi{
+  background:var(--surface);padding:14px 16px;border-radius:var(--r-md);
+  box-shadow:var(--elev-1);border:1px solid var(--outline-soft);
+}
+.kpi .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .kpi .n.accent{color:var(--red)}
 .kpi .k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--dark-gray);margin-top:5px}
-.kpi .s{font-size:11.5px;color:var(--dark-gray);margin-top:3px}
+.kpi .s{font-size:11.5px;color:var(--ink-soft);margin-top:3px}
 
-.exec-rollup .gcell-label{padding-left:22px}
-.gbar.rollup{height:26px;border-radius:2px;font-size:12px}
+.exec-rollup .gcell-label{padding-left:14px}
+.gbar.rollup{height:28px;border-radius:var(--r-pill);font-size:12px}
 .gbar.rollup .n{
-  background:rgba(255,255,255,.9);color:var(--black);border-radius:9px;
-  font-size:10.5px;font-weight:700;padding:1px 7px;flex:0 0 auto;margin-left:auto;
+  background:rgba(255,255,255,.92);color:var(--ink);border-radius:var(--r-pill);
+  font-size:10.5px;font-weight:700;padding:2px 9px;flex:0 0 auto;margin-left:auto;
 }
 .gbar.rollup.light .n{background:rgba(0,0,0,.16);color:var(--black)}
 .grow.child .gcell-label{padding-left:52px}
-.grow.child .gcell-title{font-weight:500;font-size:12.5px;color:var(--dark-gray)}
+.grow.child .gcell-title{font-weight:500;font-size:12.5px;color:var(--ink-soft)}
 .disclose{
-  border:0;background:none;padding:0;margin-right:2px;cursor:pointer;color:var(--dark-gray);
-  display:inline-flex;align-items:center;flex:0 0 auto;
+  border:0;background:none;padding:3px;margin-right:0;cursor:pointer;color:var(--ink-soft);
+  display:inline-flex;align-items:center;flex:0 0 auto;border-radius:var(--r-pill);
 }
+.disclose:hover{background:var(--surface-sunk);color:var(--ink)}
 .disclose svg{width:12px;height:12px;transition:transform .15s ease}
 .disclose[aria-expanded="true"] svg{transform:rotate(90deg)}
 
-.legend{display:flex;flex-wrap:wrap;gap:8px 22px;padding:12px 24px;border-top:1px solid var(--platinum);
-  background:var(--white);font-size:12px;color:var(--dark-gray);flex:0 0 auto;
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;padding:12px 20px;border-top:1px solid var(--outline-soft);
+  background:var(--surface-soft);font-size:12px;color:var(--ink-soft);flex:0 0 auto;
   max-height:26vh;overflow:auto}
 .legend .grp{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
-.legend .grp > strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dark-gray);font-weight:700}
+.legend .grp > strong{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
 .legend .item{display:inline-flex;align-items:center;gap:6px}
-.legend .sw{width:13px;height:13px;border-radius:2px;background:var(--c);flex:0 0 auto}
+.legend .sw{width:12px;height:12px;border-radius:4px;background:var(--c);flex:0 0 auto}
 .legend .sw.dot{border-radius:50%;width:10px;height:10px}
 .legend .sw.dia{transform:rotate(45deg);width:11px;height:11px}
 
 /* ---------- Admin console ---------- */
 .admin{display:grid;grid-template-columns:230px 1fr;flex:1;min-height:0}
-.admin-nav{border-right:1px solid var(--platinum);padding:18px 0;overflow:auto;background:var(--white)}
-.admin-nav h4{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dark-gray);padding:0 20px;margin:16px 0 7px}
+.admin-nav{border-right:1px solid var(--outline-soft);padding:16px 12px;overflow:auto;background:var(--surface)}
+.admin-nav h4{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);padding:0 14px;margin:18px 0 6px}
 .admin-nav h4:first-child{margin-top:0}
 .admin-nav button{
   display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
-  padding:8px 20px;font-size:13.5px;font-weight:500;border-left:3px solid transparent;color:var(--dark-gray);
+  padding:9px 14px;font-size:13.5px;font-weight:500;color:var(--ink-soft);
+  border-radius:var(--r-pill);transition:background .14s ease,color .14s ease;
 }
-.admin-nav button:hover{background:var(--tundra-light);color:var(--black)}
-.admin-nav button[aria-current="true"]{border-left-color:var(--red);color:var(--black);font-weight:700;background:var(--tundra-light)}
-.admin-main{overflow:auto;padding:24px 28px 64px;min-width:0}
-.admin-main h2{font-size:20px;margin-bottom:5px}
-.admin-main > p.lede{margin:0 0 20px;color:var(--dark-gray);max-width:76ch}
+.admin-nav button:hover{background:var(--surface-sunk);color:var(--ink)}
+.admin-nav button[aria-current="true"]{color:var(--ink);font-weight:700;background:var(--surface-warm)}
+.admin-main{overflow:auto;padding:24px 28px 64px;min-width:0;background:var(--surface-soft)}
+.admin-main h2{font-size:21px;margin-bottom:5px}
+.admin-main > p.lede{margin:0 0 20px;color:var(--ink-soft);max-width:76ch}
 .panel{display:none}
 .panel.is-active{display:block}
 .panel-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .panel-head .grow-1{flex:1;min-width:240px}
 
-table.tbl{width:100%;border-collapse:collapse;font-size:13px}
-table.tbl th{
-  text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);
-  font-weight:700;padding:0 12px 8px;border-bottom:1px solid var(--light-gray);white-space:nowrap;
+table.tbl{
+  width:100%;border-collapse:separate;border-spacing:0;font-size:13px;
+  background:var(--surface);border-radius:var(--r-md);overflow:hidden;
+  box-shadow:var(--elev-1);border:1px solid var(--outline-soft);
 }
-table.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
-table.tbl tr:hover td{background:var(--tundra-light)}
+table.tbl th{
+  text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+  font-weight:700;padding:12px 14px;border-bottom:1px solid var(--outline-soft);white-space:nowrap;
+  background:var(--surface-soft);
+}
+table.tbl td{padding:11px 14px;border-bottom:1px solid var(--outline-soft);vertical-align:middle}
+table.tbl tbody tr:last-child td{border-bottom:0}
+table.tbl tr:hover td{background:var(--surface-warm)}
 table.tbl td.actions{text-align:right;white-space:nowrap}
 table.tbl td.actions .btn{margin-left:6px}
 .swatch{display:inline-flex;align-items:center;gap:9px}
-.swatch i{width:20px;height:20px;border-radius:2px;background:var(--c);border:1px solid rgba(0,0,0,.12);flex:0 0 auto}
-.usecount{font-size:12px;color:var(--dark-gray)}
-.usecount.zero{color:var(--light-gray)}
+.swatch i{width:22px;height:22px;border-radius:var(--r-xs);background:var(--c);border:1px solid rgba(42,42,42,.10);flex:0 0 auto}
+.usecount{font-size:12px;color:var(--ink-soft)}
+.usecount.zero{color:var(--silver)}
 .tag{
-  display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;
-  background:var(--platinum);color:var(--asphalt);
+  display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);
+  background:var(--surface-cool);color:var(--ink);
 }
 
 .notecard{
-  border:1px solid var(--platinum);border-left:4px solid var(--red);
-  padding:14px 16px;margin-bottom:22px;background:var(--dune-light);font-size:13px;
+  border:1px solid var(--outline-soft);border-radius:var(--r-md);
+  padding:14px 18px;margin-bottom:22px;background:var(--surface-warm);font-size:13px;
 }
 .notecard strong{display:block;margin-bottom:3px;font-family:var(--font-display)}
 
-.datagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-.card{border:1px solid var(--platinum);padding:16px 18px}
+.datagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{
+  border:1px solid var(--outline-soft);border-radius:var(--r-md);padding:18px 20px;
+  background:var(--surface);box-shadow:var(--elev-1);
+}
 .card h4{font-size:14px;margin-bottom:6px}
-.card p{margin:0 0 14px;font-size:12.5px;color:var(--dark-gray)}
-textarea.control{height:auto;min-height:120px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;width:100%;resize:vertical}
+.card p{margin:0 0 14px;font-size:12.5px;color:var(--ink-soft)}
+textarea.control{height:auto;min-height:120px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;width:100%;resize:vertical;line-height:1.5}
 
 /* ---------- Dialog ---------- */
 dialog{
-  border:0;padding:0;max-width:min(860px,94vw);width:100%;
-  box-shadow:var(--shadow);background:var(--white);color:var(--black);
-  max-height:calc(100dvh - 32px);
+  border:0;padding:0;max-width:min(880px,94vw);width:100%;
+  box-shadow:var(--elev-3);background:var(--surface);color:var(--ink);
+  border-radius:var(--r-xl);max-height:calc(100dvh - 40px);
 }
-dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(42,42,42,.42);backdrop-filter:blur(2px)}
 .dlg-head{
-  display:flex;align-items:center;gap:14px;padding:18px 24px;
-  border-bottom:1px solid var(--platinum);
+  display:flex;align-items:center;gap:14px;padding:22px 26px 18px;
 }
-.dlg-head h3{font-size:18px;flex:1}
-.dlg-body{padding:22px 24px;max-height:min(66vh,620px);overflow:auto}
+.dlg-head h3{font-size:20px;flex:1}
+.dlg-body{padding:4px 26px 22px;max-height:min(66vh,620px);overflow:auto}
 .dlg-foot{
-  display:flex;align-items:center;gap:10px;padding:16px 24px;
-  border-top:1px solid var(--platinum);background:var(--dune-light);
+  display:flex;align-items:center;gap:10px;padding:16px 26px 22px;
+  background:var(--surface);
 }
 .dlg-foot .spacer{margin-left:auto}
 .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -444,16 +564,19 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .rangeline input[type=range]{flex:1;accent-color:var(--red)}
 .rangeline output{font-weight:700;font-size:13px;min-width:42px;text-align:right}
 .period{display:grid;grid-template-columns:1fr 88px;gap:8px}
-fieldset.grp{border:1px solid var(--platinum);padding:14px 16px 16px;grid-column:1/-1;margin:0}
-fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);padding:0 6px}
+fieldset.grp{
+  border:1px solid var(--outline-soft);border-radius:var(--r-md);
+  padding:14px 18px 18px;grid-column:1/-1;margin:0;background:var(--surface-soft);
+}
+fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 8px}
 /* ---------- Detail sheet (view mode) ----------
    The initiative dialog renders the same fields twice over: read-only by
    default, and editable once a field is clicked. Keeping one set of
    controls means the two modes can never drift apart. */
 .viewhint{
-  display:none;align-items:center;gap:8px;margin:0 0 18px;
-  font-size:12.5px;color:var(--dark-gray);
-  border-left:3px solid var(--red);padding:7px 12px;background:var(--dune-light);
+  display:none;align-items:center;gap:9px;margin:0 0 18px;
+  font-size:12.5px;color:var(--ink-soft);
+  padding:9px 14px;background:var(--surface-warm);border-radius:var(--r-pill);
 }
 form.is-view .viewhint{display:flex}
 form.is-view .control{
@@ -465,13 +588,13 @@ form.is-view .control{
 form.is-view select.control{background-image:none}
 form.is-view textarea.control{padding:0;min-height:0;font-weight:400}
 form.is-view .field{
-  cursor:pointer;border-radius:2px;padding:3px 8px;margin:-3px -8px;
-  border-bottom:1px solid var(--line);
+  cursor:pointer;border-radius:var(--r-sm);padding:6px 10px;margin:-2px -10px;
+  border-bottom:1px solid var(--outline-soft);
 }
-form.is-view .field:hover,form.is-view .checkline:hover{background:var(--tundra-light)}
+form.is-view .field:hover,form.is-view .checkline:hover{background:var(--surface-warm)}
 form.is-view .field:hover > label{color:var(--red)}
 form.is-view .field > label{transition:color .12s ease}
-form.is-view .checkline{cursor:pointer;border-radius:2px;padding:3px 8px;margin:-3px -8px}
+form.is-view .checkline{cursor:pointer;border-radius:var(--r-pill);padding:3px 10px;margin:-3px -10px}
 form.is-view input[type=checkbox],form.is-view input[type=range]{pointer-events:none}
 form.is-view .rangeline input[type=range]{opacity:.75}
 form.is-view #e-delete{display:none}
@@ -480,7 +603,7 @@ form.is-view .period{grid-template-columns:auto auto;justify-content:start;gap:4
    still reserves room for the longest one. Cap it: a year is four glyphs. */
 form.is-view .period .control{min-width:0;width:auto;max-width:62px}
 form.is-view .req,form.is-view .hint,form.is-view .hint-edit{display:none}
-form.is-view fieldset.grp{border-color:var(--line)}
+form.is-view fieldset.grp{border-color:var(--outline-soft);background:var(--surface)}
 form.is-view .edit-only{display:none}
 form:not(.is-view) .view-only{display:none}
 .dlg-head .lanechip{
@@ -488,7 +611,7 @@ form:not(.is-view) .view-only{display:none}
   letter-spacing:.05em;text-transform:uppercase;color:var(--dark-gray);
 }
 .dlg-head .lanechip[hidden]{display:none}
-.dlg-head .lanechip i{width:11px;height:11px;border-radius:2px;background:var(--c,var(--gray));flex:0 0 auto}
+.dlg-head .lanechip i{width:11px;height:11px;border-radius:4px;background:var(--c,var(--gray));flex:0 0 auto}
 .dlg-head .stack{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
 .dlg-head h3{font-size:18px;flex:1}
 .dlg-head .stack h3{flex:0 0 auto}
@@ -496,17 +619,25 @@ form:not(.is-view) .view-only{display:none}
 .err{color:var(--red);font-size:12.5px;font-weight:600;display:none}
 .err.show{display:block}
 .colorrow{display:flex;gap:8px;align-items:center}
-.colorrow input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--light-gray);border-radius:2px;background:var(--white);cursor:pointer}
-.swatches{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.swatches button{width:22px;height:22px;border:1px solid rgba(0,0,0,.15);border-radius:2px;cursor:pointer;padding:0}
-.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--black)}
+.colorrow input[type=color]{width:48px;height:40px;padding:3px;border:1px solid var(--outline);border-radius:var(--r-sm);background:var(--surface);cursor:pointer}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.swatches button{width:24px;height:24px;border:1px solid rgba(42,42,42,.12);border-radius:var(--r-xs);cursor:pointer;padding:0;transition:transform .12s ease}
+.swatches button:hover{transform:scale(1.12)}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
 
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
-  background:var(--asphalt);color:var(--white);padding:11px 20px;border-radius:2px;
+  background:var(--ink);color:var(--white);padding:12px 14px 12px 22px;border-radius:var(--r-pill);
   font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all .2s ease;z-index:99;
+  box-shadow:var(--elev-3);display:flex;align-items:center;gap:14px;max-width:min(560px,92vw);
 }
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast .undo{
+  border:0;background:rgba(255,255,255,.14);color:var(--white);font:inherit;font-weight:700;
+  padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;flex:0 0 auto;
+}
+.toast .undo:hover{background:rgba(255,255,255,.26)}
+.toast .undo[hidden]{display:none}
 
 @media (max-width:900px){
   .admin{grid-template-columns:1fr}
@@ -599,6 +730,12 @@ form:not(.is-view) .view-only{display:none}
           <label for="f-platform">System</label>
           <select class="control" id="f-platform"></select>
         </div>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-quiet" type="button" id="btn-reflow"
+                title="Discard the hand-set row order and sort each lane by start date">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h13M3 12h9M3 18h5"/><path d="M17 14l4 4-4 4"/><path d="M21 18h-8"/></svg>
+          Re-sort rows by date
+        </button>
       </div>
       <div class="scroller" id="detail-scroller">
         <div class="gantt" id="detail-gantt"></div>
@@ -826,7 +963,10 @@ form:not(.is-view) .view-only{display:none}
   </div>
 </dialog>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="msg"></span>
+  <button class="undo" type="button" id="toast-undo" hidden>Undo</button>
+</div>
 
 <script>
 (function(){
@@ -1023,6 +1163,24 @@ function loadView(){
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
+/* The state as of the last commit. Because commit() runs after a mutation,
+   this clone is always the "before" picture the undo stack needs. */
+var baseline = null;
+var undoStack = [];
+var UNDO_DEPTH = 25;
+
+function cloneState(){ return JSON.parse(JSON.stringify(state)); }
+
+function undo(){
+  if(!undoStack.length){ toast("Nothing to undo"); return; }
+  state = undoStack.pop();
+  normalise(state);
+  baseline = cloneState();
+  save();
+  renderAll();
+  toast("Undone");
+}
+
 function uid(prefix){
   return prefix+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 }
@@ -1060,7 +1218,41 @@ function normalise(S){
     e.sy = clampYear(e.sy, S.config.startYear); e.ey = clampYear(e.ey, e.sy);
     e.milestone = !!e.milestone; e.spotlight = !!e.spotlight;
   });
+  seedOrder(S);
   return true;
+}
+
+/* Rows are hand-orderable, so every entry carries an explicit position
+   within its lane / sub-category. Payloads written before that existed are
+   seeded from the order they used to be drawn in: earliest start first. */
+function seedOrder(S){
+  var needs = S.entries.some(function(e){ return typeof e.order !== "number" || !isFinite(e.order); });
+  if(!needs) return;
+  var groups = {};
+  S.entries.forEach(function(e){
+    var k = (e.laneId||"~") + "|" + (e.subLaneId||"~");
+    (groups[k] = groups[k] || []).push(e);
+  });
+  Object.keys(groups).forEach(function(k){
+    groups[k].sort(function(a,b){
+      var sa = (a.sy*4 + a.sq), sb = (b.sy*4 + b.sq);
+      if(sa !== sb) return sa - sb;
+      return String(a.title).localeCompare(String(b.title));
+    }).forEach(function(e,i){
+      if(typeof e.order !== "number" || !isFinite(e.order)) e.order = i;
+    });
+  });
+}
+
+/* Renumber one lane / sub-category so positions stay 0..n-1 and dense. */
+function renumber(laneId, subLaneId){
+  groupEntries(laneId, subLaneId).forEach(function(e,i){ e.order = i; });
+}
+function groupEntries(laneId, subLaneId){
+  var sub = subLaneId || null;
+  return state.entries.filter(function(e){
+    return (e.laneId||null) === (laneId||null) && (e.subLaneId||null) === sub;
+  }).sort(sortEntries);
 }
 /* Legacy payloads keyed behaviour off the status name. Map once, then
    never look at the name again. */
@@ -1131,12 +1323,13 @@ function ask(title, msg, okLabel, cb){
 }
 
 var toastTimer = null;
-function toast(msg){
+function toast(msg, opts){
   var t = $("#toast");
-  t.textContent = msg;
+  t.querySelector(".msg").textContent = msg;
+  t.querySelector(".undo").hidden = !(opts && opts.undo && undoStack.length);
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, (opts && opts.undo) ? 5200 : 2600);
 }
 function esc(s){ return String(s==null?"":s); }
 
@@ -1297,6 +1490,8 @@ function todayMarker(){
 
 function laneRow(lane, count){
   var row = el("div","glane");
+  if(lane.id) row.setAttribute("data-lane", lane.id);
+  if(lane.hasSubLanes) row.setAttribute("data-haskids", "1");
   var lab = el("div","glane-label");
   lab.style.setProperty("--lane", lane.color);
   lab.appendChild(el("h3", null, lane.name));
@@ -1305,8 +1500,11 @@ function laneRow(lane, count){
   row.appendChild(makeTrack("glane-track"));
   return row;
 }
-function subRow(sub){
+function subRow(sub, laneId){
   var row = el("div","gsub");
+  if(laneId) row.setAttribute("data-lane", laneId);
+  if(sub.id) row.setAttribute("data-sub", sub.id);
+  else row.setAttribute("data-sub", "");
   var lab = el("div","gsub-label", sub.name);
   lab.style.setProperty("--lane", sub.color);
   row.appendChild(lab);
@@ -1353,10 +1551,31 @@ function matchesFilters(e){
   return true;
 }
 
+/* Hand-set position first; date order only breaks ties. */
 function sortEntries(a,b){
+  var oa = (typeof a.order === "number") ? a.order : 1e9;
+  var ob = (typeof b.order === "number") ? b.order : 1e9;
+  if(oa !== ob) return oa - ob;
   var sa = colIndex(a.sy,a.sq), sb = colIndex(b.sy,b.sq);
   if(sa!==sb) return sa-sb;
   return a.title.localeCompare(b.title);
+}
+
+/* Throw away the hand-set order and go back to earliest-start-first. */
+function reflowByDate(){
+  var groups = {};
+  state.entries.forEach(function(e){
+    var k = (e.laneId||"~") + "|" + (e.subLaneId||"~");
+    (groups[k] = groups[k] || []).push(e);
+  });
+  Object.keys(groups).forEach(function(k){
+    groups[k].sort(function(a,b){
+      var sa = colIndex(a.sy,a.sq), sb = colIndex(b.sy,b.sq);
+      if(sa !== sb) return sa - sb;
+      return a.title.localeCompare(b.title);
+    }).forEach(function(e,i){ e.order = i; });
+  });
+  commit("Rows re-sorted by start date", {undo:true});
 }
 
 function entryRow(e, childOf){
@@ -1373,8 +1592,25 @@ function entryRow(e, childOf){
   var lab = el("div","gcell-label");
   lab.tabIndex = 0;
   lab.setAttribute("role","button");
-  lab.setAttribute("aria-label","Edit "+e.title);
+  lab.setAttribute("aria-label","Open "+e.title);
 
+  /* The executive view is a roll-up, so rows are not hand-orderable there. */
+  if(!childOf){
+    var grip = el("button","rowgrip");
+    grip.type = "button";
+    grip.title = "Drag to move between lanes and positions";
+    grip.setAttribute("aria-label","Reorder "+e.title);
+    grip.innerHTML = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'+
+      '<circle cx="6" cy="3" r="1.4"/><circle cx="10" cy="3" r="1.4"/>'+
+      '<circle cx="6" cy="8" r="1.4"/><circle cx="10" cy="8" r="1.4"/>'+
+      '<circle cx="6" cy="13" r="1.4"/><circle cx="10" cy="13" r="1.4"/></svg>';
+    grip.addEventListener("click", function(ev){ ev.stopPropagation(); });
+    grip.addEventListener("pointerdown", function(ev){ startRowDrag(ev, e, row, grip); });
+    grip.addEventListener("keydown", function(ev){ rowKeyMove(ev, e); });
+    lab.appendChild(grip);
+  }
+
+  var text = el("div","gcell-text");
   var title = el("div","gcell-title");
   if(e.spotlight){
     var flag = el("span","flag");
@@ -1383,7 +1619,7 @@ function entryRow(e, childOf){
     title.appendChild(flag);
   }
   title.appendChild(el("span",null,e.title));
-  lab.appendChild(title);
+  text.appendChild(title);
 
   var bits = [];
   if(status) bits.push(status.name);
@@ -1392,7 +1628,8 @@ function entryRow(e, childOf){
   if(e.platformId) bits.push(nameOf(state.platforms,e.platformId));
   bits.push(spanLabel(e));
   var meta = el("div","gcell-meta", bits.filter(Boolean).join(" · "));
-  lab.appendChild(meta);
+  text.appendChild(meta);
+  lab.appendChild(text);
 
   lab.addEventListener("click", function(){ openEntryDialog(e.id); });
   lab.addEventListener("keydown", function(ev){
@@ -1423,7 +1660,24 @@ function entryRow(e, childOf){
     bar.addEventListener("click", function(){ openEntryDialog(e.id); });
     bar.addEventListener("keydown", function(ev){
       if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openEntryDialog(e.id); }
+      else barKeyMove(ev, e);
     });
+    if(!childOf){
+      bar.addEventListener("pointerdown", function(ev){
+        if(ev.target.classList && ev.target.classList.contains("rz")) return;
+        startBarDrag(ev, e, bar, "move");
+      });
+      if(!e.milestone){
+        ["l","r"].forEach(function(side){
+          var h = el("span","rz rz-"+side);
+          h.addEventListener("pointerdown", function(ev){
+            ev.stopPropagation();
+            startBarDrag(ev, e, bar, side==="l" ? "start" : "end");
+          });
+          bar.appendChild(h);
+        });
+      }
+    }
   }else{
     track.appendChild(el("div","gcell-meta","Outside the configured horizon"));
   }
@@ -1462,14 +1716,14 @@ function renderDetail(){
       subs.forEach(function(sub){
         var inSub = inLane.filter(function(e){ return e.subLaneId===sub.id; }).sort(sortEntries);
         if(!inSub.length) return;
-        body.appendChild(subRow(sub));
+        body.appendChild(subRow(sub, lane.id));
         inSub.forEach(function(e){ body.appendChild(entryRow(e)); });
       });
       var orphans = inLane.filter(function(e){
         return !e.subLaneId || !byId(state.subLanes, e.subLaneId);
       }).sort(sortEntries);
       if(orphans.length){
-        body.appendChild(subRow({name:"Unassigned", color:"#A9A8A6"}));
+        body.appendChild(subRow({name:"Unassigned", color:"#A9A8A6"}, lane.id));
         orphans.forEach(function(e){ body.appendChild(entryRow(e)); });
       }
     }else{
@@ -1528,6 +1782,278 @@ function renderLegend(host){
   m2.appendChild(el("span",null,"★ Executive spotlight"));
   g3.appendChild(m2);
   host.appendChild(g3);
+
+  if(host.id === "detail-legend"){
+    var g4 = el("div","grp");
+    g4.appendChild(el("strong",null,"Drag"));
+    g4.appendChild(el("span","item","Grip at the left of a row moves it between lanes"));
+    g4.appendChild(el("span","item","Bar moves it in time; its ends change the duration"));
+    host.appendChild(g4);
+  }
+}
+
+/* ============================================================
+   6b. Direct manipulation
+   Two gestures, deliberately kept apart so neither fires by accident:
+   the grip at the left of a row moves it between lanes and positions,
+   the bar itself moves and resizes in time.
+   ============================================================ */
+/* A finished drag is followed by a click the browser generates on its own.
+   Swallow exactly that one, in the capture phase, and disarm straight after
+   - a longer-lived flag would eat a later, legitimate click on another bar. */
+function swallowNextClick(){
+  var timer;
+  function handler(ev){ ev.stopPropagation(); ev.preventDefault(); cleanup(); }
+  function cleanup(){
+    document.removeEventListener("click", handler, true);
+    clearTimeout(timer);
+  }
+  timer = setTimeout(cleanup, 350);
+  document.addEventListener("click", handler, true);
+}
+function colToPeriod(i){
+  return { y: state.config.startYear + Math.floor(i/4), q: (i % 4) + 1 };
+}
+
+/* ---- Drop targets for a row drag ----
+   Built once per drag from what is actually on screen, so the insertion
+   point is expressed relative to a visible neighbour. That keeps the
+   result correct even when filters hide part of a lane. */
+function buildDropTargets(dragId){
+  var body = $("#detail-gantt .gbody");
+  if(!body) return [];
+  var targets = [], lane = null, sub = null, laneHasKids = false;
+  Array.prototype.slice.call(body.children).forEach(function(node){
+    var r = node.getBoundingClientRect();
+    if(node.classList.contains("glane")){
+      lane = node.getAttribute("data-lane");
+      sub = null;
+      laneHasKids = node.getAttribute("data-haskids") === "1";
+      /* A lane with sub-categories has no rows of its own to drop into. */
+      if(lane && !laneHasKids) targets.push({lane:lane, sub:null, afterId:null, y:r.bottom});
+    }else if(node.classList.contains("gsub")){
+      sub = node.getAttribute("data-sub") || null;
+      if(lane) targets.push({lane:lane, sub:sub, afterId:null, y:r.bottom});
+    }else if(node.classList.contains("grow")){
+      var id = node.getAttribute("data-id");
+      if(!id || id === dragId || !lane) return;
+      targets.push({lane:lane, sub:sub, afterId:id, y:r.bottom});
+    }
+  });
+  return targets;
+}
+
+var rowDrag = null;
+
+function startRowDrag(ev, entry, rowEl, grip){
+  if(ev.button != null && ev.button !== 0) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  var scroller = $("#detail-scroller");
+  var body = $("#detail-gantt .gbody");
+  var line = el("div","drop-line");
+  line.style.width = $("#detail-gantt").scrollWidth + "px";
+  body.appendChild(line);
+
+  rowDrag = {
+    entry: entry,
+    targets: buildDropTargets(entry.id),
+    target: null,
+    line: line,
+    startY: ev.clientY,
+    moved: false
+  };
+  rowEl.classList.add("row-dragging");
+  document.body.classList.add("row-dragging");
+  try{ grip.setPointerCapture(ev.pointerId); }catch(err){}
+
+  function place(clientY){
+    if(!rowDrag.targets.length) return;
+    var best = null, bestD = Infinity;
+    rowDrag.targets.forEach(function(t){
+      var d = Math.abs(t.y - clientY);
+      if(d < bestD){ bestD = d; best = t; }
+    });
+    rowDrag.target = best;
+    line.style.top = (best.y - body.getBoundingClientRect().top - 1) + "px";
+  }
+  place(ev.clientY);
+
+  function move(e){
+    if(Math.abs(e.clientY - rowDrag.startY) > 3) rowDrag.moved = true;
+    /* Nudge the pane when the pointer reaches its edge. */
+    var box = scroller.getBoundingClientRect();
+    if(e.clientY < box.top + 48) scroller.scrollTop -= 12;
+    else if(e.clientY > box.bottom - 48) scroller.scrollTop += 12;
+    rowDrag.targets = buildDropTargets(entry.id);
+    place(e.clientY);
+  }
+  function up(){
+    grip.removeEventListener("pointermove", move);
+    grip.removeEventListener("pointerup", up);
+    grip.removeEventListener("pointercancel", up);
+    try{ grip.releasePointerCapture(ev.pointerId); }catch(err){}
+    rowEl.classList.remove("row-dragging");
+    document.body.classList.remove("row-dragging");
+    if(line.parentNode) line.parentNode.removeChild(line);
+    var t = rowDrag.target, moved = rowDrag.moved;
+    rowDrag = null;
+    if(moved && t) dropEntry(entry, t);
+  }
+  grip.addEventListener("pointermove", move);
+  grip.addEventListener("pointerup", up);
+  grip.addEventListener("pointercancel", up);
+}
+
+/* Apply a row drop: re-home the entry and renumber both groups touched. */
+function dropEntry(entry, target){
+  var fromLane = entry.laneId, fromSub = entry.subLaneId || null;
+  var toLane = target.lane, toSub = target.sub || null;
+
+  var lane = byId(state.lanes, toLane);
+  if(!lane) return;
+  if(!lane.hasSubLanes) toSub = null;
+
+  var group = groupEntries(toLane, toSub).filter(function(e){ return e.id !== entry.id; });
+  var at = 0;
+  if(target.afterId){
+    for(var i=0;i<group.length;i++){ if(group[i].id === target.afterId){ at = i+1; break; } }
+  }
+  entry.laneId = toLane;
+  entry.subLaneId = toSub;
+  group.splice(at, 0, entry);
+  group.forEach(function(e,i){ e.order = i; });
+  if(fromLane !== toLane || fromSub !== toSub) renumber(fromLane, fromSub);
+
+  var where = lane.name + (toSub ? " · " + nameOf(state.subLanes, toSub) : "");
+  commit("Moved to " + where, {undo:true});
+}
+
+/* Keyboard equivalent, so the grip is not a mouse-only control. */
+function rowKeyMove(ev, entry){
+  var dir = ev.key === "ArrowUp" ? -1 : (ev.key === "ArrowDown" ? 1 : 0);
+  if(!dir) return;
+  ev.preventDefault();
+  var group = groupEntries(entry.laneId, entry.subLaneId);
+  var i = group.map(function(e){ return e.id; }).indexOf(entry.id);
+  var j = i + dir;
+  if(i < 0 || j < 0 || j >= group.length) return;
+  group.splice(j, 0, group.splice(i, 1)[0]);
+  group.forEach(function(e,k){ e.order = k; });
+  commit("Moved " + (dir < 0 ? "up" : "down"), {undo:true});
+  /* Keep the keyboard on the row it just moved. */
+  setTimeout(function(){
+    var again = document.querySelector('#detail-gantt .grow[data-id="'+entry.id+'"] .rowgrip');
+    if(again) again.focus();
+  }, 0);
+}
+
+/* ---- Bar drag: move the whole span, or pull either end ---- */
+var barDrag = null;
+
+function startBarDrag(ev, entry, bar, mode){
+  if(ev.button != null && ev.button !== 0) return;
+  ev.preventDefault();
+
+  var cols = colCount();
+  var s0 = colIndex(entry.sy, entry.sq);
+  var e0 = entry.milestone ? s0 : colIndex(entry.ey, entry.eq);
+  var badge = el("div","dragbadge");
+  $("#detail-gantt .gbody").appendChild(badge);
+
+  barDrag = {entry:entry, bar:bar, mode:mode, s:s0, e:e0, moved:false};
+  bar.classList.add("bar-dragging");
+  document.body.classList.add("bar-dragging");
+  try{ bar.setPointerCapture(ev.pointerId); }catch(err){}
+
+  var startX = ev.clientX;
+  var bodyBox = $("#detail-gantt .gbody").getBoundingClientRect();
+
+  function apply(clientX){
+    var d = Math.round((clientX - startX) / ui.zoom);
+    var ns = s0, ne = e0;
+    if(mode === "move"){
+      ns = s0 + d; ne = e0 + d;
+      if(ns < 0){ ne -= ns; ns = 0; }
+      if(ne > cols-1){ ns -= (ne - (cols-1)); ne = cols-1; }
+      ns = Math.max(0, ns);
+    }else if(mode === "start"){
+      ns = Math.min(Math.max(0, s0 + d), e0);
+    }else{
+      ne = Math.max(Math.min(cols-1, e0 + d), s0);
+    }
+    barDrag.s = ns; barDrag.e = ne;
+    bar.style.gridColumn = (ns+1) + " / " + (ne+2);
+
+    var a = colToPeriod(ns), b = colToPeriod(ne);
+    badge.textContent = entry.milestone
+      ? periodLabel(a.y, a.q)
+      : periodLabel(a.y, a.q) + " – " + periodLabel(b.y, b.q) + "  ·  " + (ne - ns + 1) + "q";
+    var box = bar.getBoundingClientRect();
+    badge.style.left = (box.left + box.width/2 - bodyBox.left) + "px";
+    badge.style.top  = (box.top - bodyBox.top) + "px";
+  }
+  apply(ev.clientX);
+
+  function move(e){
+    if(Math.abs(e.clientX - startX) > 3) barDrag.moved = true;
+    apply(e.clientX);
+  }
+  function up(){
+    bar.removeEventListener("pointermove", move);
+    bar.removeEventListener("pointerup", up);
+    bar.removeEventListener("pointercancel", up);
+    try{ bar.releasePointerCapture(ev.pointerId); }catch(err){}
+    bar.classList.remove("bar-dragging");
+    document.body.classList.remove("bar-dragging");
+    if(badge.parentNode) badge.parentNode.removeChild(badge);
+
+    var d = barDrag;
+    barDrag = null;
+    /* Nothing actually changed - put the bar back where it was rather than
+       re-rendering, which would tear out the element the click is about to
+       land on and swallow the open-the-sheet gesture. */
+    if(!d.moved || (d.s === s0 && d.e === e0)){
+      bar.style.gridColumn = (Math.max(0,s0)+1) + " / " + (Math.min(cols-1,e0)+2);
+      return;
+    }
+
+    swallowNextClick();
+    var a = colToPeriod(d.s), b = colToPeriod(d.e);
+    entry.sy = a.y; entry.sq = a.q;
+    if(entry.milestone){ entry.ey = a.y; entry.eq = a.q; }
+    else { entry.ey = b.y; entry.eq = b.q; }
+    commit(entry.title + " → " + spanLabel(entry), {undo:true});
+  }
+  bar.addEventListener("pointermove", move);
+  bar.addEventListener("pointerup", up);
+  bar.addEventListener("pointercancel", up);
+}
+
+/* Keyboard equivalent for rescheduling: arrows shift, shift+arrows resize. */
+function barKeyMove(ev, entry){
+  var dir = ev.key === "ArrowLeft" ? -1 : (ev.key === "ArrowRight" ? 1 : 0);
+  if(!dir) return;
+  ev.preventDefault();
+  var cols = colCount();
+  var s = colIndex(entry.sy, entry.sq);
+  var e = entry.milestone ? s : colIndex(entry.ey, entry.eq);
+  if(ev.shiftKey && !entry.milestone){
+    e = Math.max(s, Math.min(cols-1, e + dir));
+  }else{
+    if(s + dir < 0 || e + dir > cols-1) return;
+    s += dir; e += dir;
+  }
+  var a = colToPeriod(s), b = colToPeriod(e);
+  entry.sy = a.y; entry.sq = a.q;
+  entry.ey = entry.milestone ? a.y : b.y;
+  entry.eq = entry.milestone ? a.q : b.q;
+  commit(spanLabel(entry), {undo:true});
+  setTimeout(function(){
+    var again = document.querySelector('#detail-gantt .grow[data-id="'+entry.id+'"] .gbar');
+    if(again) again.focus();
+  }, 0);
 }
 
 /* ============================================================
@@ -1625,6 +2151,7 @@ function rollupRow(opts){
 
   var row = el("div","grow");
   var lab = el("div","gcell-label");
+  var text = el("div","gcell-text");
 
   var title = el("div","gcell-title");
   var btn = el("button","disclose");
@@ -1639,7 +2166,7 @@ function rollupRow(opts){
   });
   title.appendChild(btn);
   title.appendChild(el("span",null,opts.name));
-  lab.appendChild(title);
+  text.appendChild(title);
 
   var agg = opts.agg;
   var meta = [];
@@ -1647,7 +2174,8 @@ function rollupRow(opts){
   if(agg.complete) meta.push(agg.complete+" complete");
   if(agg.progress) meta.push(agg.progress+"% avg progress");
   if(agg.atRisk) meta.push("at risk");
-  lab.appendChild(el("div","gcell-meta", meta.join(" · ")));
+  text.appendChild(el("div","gcell-meta", meta.join(" · ")));
+  lab.appendChild(text);
 
   lab.addEventListener("click", function(){
     ui.expanded[key] = !ui.expanded[key];
@@ -2600,10 +3128,15 @@ function saveValue(){
 /* ============================================================
    10. Render orchestration + wiring
    ============================================================ */
-function commit(msg){
+function commit(msg, opts){
+  if(baseline){
+    undoStack.push(baseline);
+    if(undoStack.length > UNDO_DEPTH) undoStack.shift();
+  }
+  baseline = cloneState();
   save();
   renderAll();
-  if(msg) toast(msg);
+  if(msg) toast(msg, opts);
 }
 
 function refreshFilterSelects(){
@@ -2702,6 +3235,11 @@ function wire(){
     $("#toolbar-more").hidden = open;
   });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
+  $("#btn-reflow").addEventListener("click", reflowByDate);
+  $("#toast-undo").addEventListener("click", function(){
+    $("#toast").classList.remove("show");
+    undo();
+  });
   $("#btn-add").addEventListener("click", function(){ openEntryDialog(null); });
 
   $$("#view-detail .segmented button").forEach(function(b){
@@ -2806,6 +3344,17 @@ function wire(){
     if(ev.key==="n" && (ev.metaKey||ev.ctrlKey) && !ev.shiftKey){
       ev.preventDefault(); openEntryDialog(null);
     }
+    if((ev.key==="z" || ev.key==="Z") && (ev.metaKey||ev.ctrlKey) && !ev.shiftKey){
+      /* Leave the browser's own undo alone while a field has focus. */
+      var t = ev.target;
+      if(t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      ev.preventDefault();
+      undo();
+    }
+    if(ev.key==="Escape" && (rowDrag || barDrag)){
+      ev.preventDefault();
+      renderDetail();
+    }
   });
 }
 
@@ -2841,6 +3390,7 @@ function collectBandKeys(){
    ============================================================ */
 state = load() || seedState();
 normalise(state);
+baseline = cloneState();
 loadView();
 wire();
 renderAll();
