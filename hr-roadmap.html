@@ -12,6 +12,12 @@
    header slot marked "logo asset".
    ============================================================ */
 :root{
+  /* The Cummins palette is a single light system - it is not inverted into a
+     dark theme. Declaring the scheme stops Chrome/Edge "Auto Dark Mode" from
+     re-colouring the page itself, which turned dialog text white on white,
+     and keeps form controls and scrollbars on the light UA styling. */
+  color-scheme: light;
+
   /* Established brand palette */
   --red:#DA291C;
   --black:#000000;
@@ -68,6 +74,15 @@ body{
 }
 h1,h2,h3,h4{font-family:var(--font-display);font-weight:700;margin:0;letter-spacing:-.01em}
 button,input,select,textarea{font:inherit;color:inherit}
+/* Controls sit on white surfaces, so they state their own colour rather than
+   trusting an inherited one. */
+.control,.btn,.segmented button{color:var(--black)}
+.btn-primary{color:var(--white)}
+.btn-danger{color:var(--red)}
+.btn-danger:hover,.btn-primary:hover{color:var(--white)}
+.btn:hover{color:var(--white)}
+.btn-quiet{color:var(--dark-gray)}
+.btn-quiet:hover{color:var(--black)}
 :focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
 /* ---------- App shell ---------- */
@@ -197,7 +212,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 }
 .gyear:first-child{border-left:0}
 .gq{
-  text-align:center;padding:3px 2px 7px;font-size:10.5px;font-weight:600;color:var(--gray);
+  text-align:center;padding:3px 2px 7px;font-size:10.5px;font-weight:600;color:var(--dark-gray);
   border-left:1px solid var(--line);
 }
 .gq.q1{border-left:2px solid var(--light-gray)}
@@ -258,7 +273,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .gcell-title > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .gcell-title .flag{color:var(--red);flex:0 0 auto}
 .gcell-meta{
-  font-size:11px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:11px;color:var(--dark-gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .gcell-meta b{font-weight:600;color:var(--dark-gray)}
 
@@ -284,7 +299,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .gbar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gbar .fill{
   position:absolute;inset:0 auto 0 0;width:var(--p,0%);
-  background:rgba(0,0,0,.24);pointer-events:none;
+  background:var(--fg,#000);opacity:.18;pointer-events:none;
 }
 .gbar.on-hold{opacity:.55}
 .gbar.at-risk{box-shadow:inset 0 0 0 2px var(--red)}
@@ -300,7 +315,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .gbar.milestone .lbl{display:none}
 .gbar-status{
   width:7px;height:7px;border-radius:50%;flex:0 0 auto;
-  background:var(--sc,transparent);box-shadow:0 0 0 1.5px rgba(255,255,255,.75);
+  background:var(--sc,transparent);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.75);          /* fallback */
+  box-shadow:0 0 0 1.5px color-mix(in srgb, var(--fg,#fff) 70%, transparent);
 }
 
 .today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none}
@@ -309,7 +326,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   color:var(--red);background:var(--white);padding:0 4px;white-space:nowrap;
 }
 
-.empty{padding:64px 24px;text-align:center;color:var(--gray)}
+.empty{padding:64px 24px;text-align:center;color:var(--dark-gray)}
 .empty h3{font-size:16px;color:var(--black);margin-bottom:6px}
 .empty p{margin:0 0 16px}
 
@@ -323,7 +340,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .kpi{background:var(--white);padding:14px 16px}
 .kpi .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
 .kpi .n.accent{color:var(--red)}
-.kpi .k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--gray);margin-top:5px}
+.kpi .k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--dark-gray);margin-top:5px}
 .kpi .s{font-size:11.5px;color:var(--dark-gray);margin-top:3px}
 
 .exec-rollup .gcell-label{padding-left:22px}
@@ -346,7 +363,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   background:var(--white);font-size:12px;color:var(--dark-gray);flex:0 0 auto;
   max-height:26vh;overflow:auto}
 .legend .grp{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
-.legend .grp > strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);font-weight:700}
+.legend .grp > strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dark-gray);font-weight:700}
 .legend .item{display:inline-flex;align-items:center;gap:6px}
 .legend .sw{width:13px;height:13px;border-radius:2px;background:var(--c);flex:0 0 auto}
 .legend .sw.dot{border-radius:50%;width:10px;height:10px}
@@ -355,7 +372,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 /* ---------- Admin console ---------- */
 .admin{display:grid;grid-template-columns:230px 1fr;flex:1;min-height:0}
 .admin-nav{border-right:1px solid var(--platinum);padding:18px 0;overflow:auto;background:var(--white)}
-.admin-nav h4{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);padding:0 20px;margin:16px 0 7px}
+.admin-nav h4{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dark-gray);padding:0 20px;margin:16px 0 7px}
 .admin-nav h4:first-child{margin-top:0}
 .admin-nav button{
   display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;
@@ -373,7 +390,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 
 table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 table.tbl th{
-  text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);
+  text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dark-gray);
   font-weight:700;padding:0 12px 8px;border-bottom:1px solid var(--light-gray);white-space:nowrap;
 }
 table.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -382,11 +399,11 @@ table.tbl td.actions{text-align:right;white-space:nowrap}
 table.tbl td.actions .btn{margin-left:6px}
 .swatch{display:inline-flex;align-items:center;gap:9px}
 .swatch i{width:20px;height:20px;border-radius:2px;background:var(--c);border:1px solid rgba(0,0,0,.12);flex:0 0 auto}
-.usecount{font-size:12px;color:var(--gray)}
+.usecount{font-size:12px;color:var(--dark-gray)}
 .usecount.zero{color:var(--light-gray)}
 .tag{
   display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;
-  background:var(--platinum);color:var(--dark-gray);
+  background:var(--platinum);color:var(--asphalt);
 }
 
 .notecard{
@@ -404,7 +421,8 @@ textarea.control{height:auto;min-height:120px;padding:10px;font-family:ui-monosp
 /* ---------- Dialog ---------- */
 dialog{
   border:0;padding:0;max-width:min(860px,94vw);width:100%;
-  box-shadow:var(--shadow);background:var(--white);
+  box-shadow:var(--shadow);background:var(--white);color:var(--black);
+  max-height:calc(100dvh - 32px);
 }
 dialog::backdrop{background:rgba(0,0,0,.5)}
 .dlg-head{
@@ -421,7 +439,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .formgrid .full{grid-column:1/-1}
 .formgrid .field .control{width:100%;min-width:0}
-.formgrid .field .hint{font-size:11.5px;color:var(--gray)}
+.formgrid .field .hint{font-size:11.5px;color:var(--dark-gray)}
 .rangeline{display:flex;align-items:center;gap:12px}
 .rangeline input[type=range]{flex:1;accent-color:var(--red)}
 .rangeline output{font-weight:700;font-size:13px;min-width:42px;text-align:right}
@@ -439,7 +457,8 @@ fieldset.grp legend{font-size:11px;font-weight:700;letter-spacing:.08em;text-tra
 }
 form.is-view .viewhint{display:flex}
 form.is-view .control{
-  border-color:transparent;background:transparent;padding-left:0;padding-right:0;
+  border-color:transparent;background:transparent;color:var(--black);
+  padding-left:0;padding-right:0;
   pointer-events:none;font-weight:600;height:auto;min-height:34px;
   -webkit-appearance:none;appearance:none;text-overflow:ellipsis;
 }
@@ -1080,18 +1099,24 @@ function nameOf(list,id,fallback){
   var it = byId(list,id);
   return it ? it.name : (fallback||"");
 }
-/* Relative luminance -> readable foreground, so bar labels stay legible
-   on both Canyon and Redwood. */
-function readableOn(hex){
+/* Pick whichever of black or white actually scores better against the bar
+   colour. A fixed luminance cut-off got this wrong on the mid-tone lanes:
+   Tide and Pasture were handed white text at ~2.8:1. */
+function relLuminance(hex){
   var c = String(hex||"").replace("#","");
   if(c.length===3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-  if(c.length!==6) return "#FFFFFF";
+  if(c.length!==6) return 1;
   var ch = [0,2,4].map(function(i){
     var v = parseInt(c.substr(i,2),16)/255;
     return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
   });
-  var L = 0.2126*ch[0] + 0.7152*ch[1] + 0.0722*ch[2];
-  return L > 0.42 ? "#000000" : "#FFFFFF";
+  return 0.2126*ch[0] + 0.7152*ch[1] + 0.0722*ch[2];
+}
+function readableOn(hex){
+  var L = relLuminance(hex);
+  var onWhite = 1.05 / (L + 0.05);   /* white text over the colour */
+  var onBlack = (L + 0.05) / 0.05;   /* black text over the colour */
+  return onBlack >= onWhite ? "#000000" : "#FFFFFF";
 }
 /* In-app confirmation. A sandboxed frame can suppress window.confirm(),
    which would silently swallow a removal, so the app owns this dialog. */
