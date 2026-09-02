@@ -513,6 +513,53 @@ form.is-view .depchip button{display:none}
 .depneeded:empty{display:none}
 .depneeded strong{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase}
 
+/* ---------- Dependency flow ----------
+   HTML nodes with an SVG layer behind them: the boxes keep real text
+   truncation, hover and click, and only the connectors are drawn. */
+.depflow{
+  position:relative;display:flex;align-items:stretch;gap:44px;
+  margin-top:18px;padding-top:16px;border-top:1px solid var(--outline-soft);
+}
+.depflow[hidden]{display:none}
+.flowcol{
+  display:flex;flex-direction:column;justify-content:center;gap:8px;
+  flex:1 1 0;min-width:0;position:relative;z-index:1;
+}
+.flowcol:empty,.flowcol.is-empty{display:none}
+.flowhead{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-soft);text-align:center;margin-bottom:2px;
+}
+.flownode{
+  background:var(--surface);border:1px solid var(--outline);border-radius:var(--r-sm);
+  padding:8px 11px;min-width:0;display:flex;flex-direction:column;gap:2px;
+  box-shadow:var(--elev-1);
+}
+.flownode .t{
+  font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:flex;align-items:center;gap:7px;min-width:0;
+}
+.flownode .t i{width:8px;height:8px;border-radius:3px;background:var(--lane,var(--gray));flex:0 0 auto}
+.flownode .t span{overflow:hidden;text-overflow:ellipsis}
+.flownode .m{font-size:10.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flownode.link{cursor:pointer;transition:border-color .14s ease,box-shadow .14s ease}
+.flownode.link:hover{border-color:var(--ink);box-shadow:var(--elev-2)}
+.flownode.external{border-style:dashed;box-shadow:none;background:var(--surface-soft)}
+.flownode.tight{border-color:var(--dawn)}
+.flownode.tight .m{color:var(--redwood);font-weight:600}
+.flownode.self{
+  border:2px solid var(--ink);background:var(--surface-warm);box-shadow:var(--elev-2);
+}
+.flownode.self .t{font-size:12.5px}
+.flowwires{position:absolute;left:0;top:0;pointer-events:none;z-index:0;overflow:visible}
+.flowwire path{fill:none;stroke:var(--gray);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.flowwire .arrow{fill:var(--gray);stroke:none}
+.flowwire.tight path{stroke:var(--dawn);stroke-dasharray:5 3}
+.flowwire.tight .arrow{fill:var(--dawn)}
+@media (max-width:640px){
+  .depflow{flex-direction:column;gap:30px}
+}
+
 /* ---------- Direct manipulation ----------
    Two separate gestures, so neither can be triggered by accident:
    the grip on the left of a row moves it between lanes and positions,
@@ -1037,7 +1084,11 @@ form:not(.is-view) .view-only{display:none}
             <button class="btn btn-quiet btn-sm" type="button" id="e-dep-add-text">Add</button>
           </div>
           <p class="err" id="e-dep-err"></p>
-          <div class="depneeded" id="e-dep-needed"></div>
+          <div class="depflow" id="e-dep-flow" hidden>
+            <div class="flowcol" data-col="left"><span class="flowhead">Waits on</span></div>
+            <div class="flowcol" data-col="mid"><span class="flowhead">This initiative</span></div>
+            <div class="flowcol" data-col="right"><span class="flowhead">Enables</span></div>
+          </div>
         </fieldset>
         <div class="field full">
           <label for="e-notes">Notes</label>
@@ -3560,6 +3611,8 @@ function renderDepEditor(){
   var probe = {
     sy:Number($("#e-start-year").value)||state.config.startYear,
     sq:Number($("#e-start-q").value)||1,
+    ey:Number($("#e-end-year").value)||state.config.startYear,
+    eq:Number($("#e-end-q").value)||1,
     milestone:$("#e-milestone").checked
   };
 
@@ -3606,24 +3659,7 @@ function renderDepEditor(){
     host.appendChild(el("span","depsep","Nothing yet."));
   }
 
-  /* What is waiting on this one - read-only, and only once it exists. */
-  var needed = $("#e-dep-needed");
-  needed.innerHTML = "";
-  if(self){
-    var users = dependentsOf(self);
-    if(users.length){
-      needed.appendChild(el("strong",null,"Required by"));
-      users.forEach(function(u){
-        var chip = el("div","depchip link");
-        var lane = byId(state.lanes, u.laneId);
-        chip.style.setProperty("--lane", (lane && lane.color) || "#787877");
-        chip.appendChild(el("i"));
-        chip.appendChild(el("span","t", u.title));
-        chip.addEventListener("click", function(){ openEntryDialog(u.id); });
-        needed.appendChild(chip);
-      });
-    }
-  }
+  renderDepFlow(self, probe);
 
   /* Offer every initiative that is not already linked and cannot close a loop. */
   var pick = $("#e-dep-pick");
@@ -3636,6 +3672,168 @@ function renderDepEditor(){
     .map(function(x){ return {id:x.id, name:x.title}; });   /* fillSelect reads .name */
   fillSelect(pick, options, {placeholder:"— an initiative on this roadmap —", selected:""});
   pick.disabled = !options.length;
+}
+
+/* ---- The flow: what enables this initiative, and what it enables ---- */
+function flowNode(opts){
+  var node = el("div","flownode"+(opts.cls?" "+opts.cls:""));
+  var t = el("div","t");
+  if(opts.color){
+    node.style.setProperty("--lane", opts.color);
+    t.appendChild(el("i"));
+  }
+  t.appendChild(el("span",null,opts.title));
+  node.appendChild(t);
+  if(opts.meta) node.appendChild(el("div","m", opts.meta));
+  if(opts.onOpen){
+    node.classList.add("link");
+    node.tabIndex = 0;
+    node.setAttribute("role","button");
+    node.title = "Open " + opts.title;
+    node.addEventListener("click", opts.onOpen);
+    node.addEventListener("keydown", function(ev){
+      if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); opts.onOpen(); }
+    });
+  }
+  return node;
+}
+
+function laneColourOf(e){
+  var sub = byId(state.subLanes, e.subLaneId);
+  var lane = byId(state.lanes, e.laneId);
+  return (sub && sub.color) || (lane && lane.color) || "#787877";
+}
+
+function renderDepFlow(self, probe){
+  var flow = $("#e-dep-flow");
+  var left = flow.querySelector('[data-col="left"]');
+  var mid  = flow.querySelector('[data-col="mid"]');
+  var right= flow.querySelector('[data-col="right"]');
+  [left, mid, right].forEach(function(c){
+    /* keep the column heading, drop the nodes */
+    Array.prototype.slice.call(c.children).forEach(function(ch){
+      if(!ch.classList.contains("flowhead")) ch.remove();
+    });
+  });
+  var wires = flow.querySelector("svg.flowwires");
+  if(wires) wires.remove();
+
+  var users = self ? dependentsOf(self) : [];
+  if(!draftDeps.length && !users.length){ flow.hidden = true; return; }
+  flow.hidden = false;
+
+  draftDeps.forEach(function(d){
+    if(d.ref){
+      var t = byId(state.entries, d.ref);
+      if(!t) return;
+      var tight = depIsTight(t, probe);
+      left.appendChild(flowNode({
+        title: t.title,
+        meta: (tight ? "ends " : "done ") + periodLabel(t.ey, t.eq),
+        color: laneColourOf(t),
+        cls: "link" + (tight ? " tight" : ""),
+        onOpen: function(){ openEntryDialog(t.id); }
+      }));
+    }else{
+      left.appendChild(flowNode({title: d.text, meta: "outside the roadmap", cls: "external"}));
+    }
+  });
+
+  mid.appendChild(flowNode({
+    title: $("#e-title").value.trim() || "This initiative",
+    meta: probe.milestone ? periodLabel(probe.sy, probe.sq)
+                          : "starts " + periodLabel(probe.sy, probe.sq),
+    color: self ? laneColourOf(self) : (byId(state.lanes, $("#e-lane").value)||{}).color,
+    cls: "self"
+  }));
+
+  users.forEach(function(u){
+    right.appendChild(flowNode({
+      title: u.title,
+      meta: "starts " + periodLabel(u.sy, u.sq),
+      color: laneColourOf(u),
+      cls: "link" + (depIsTight(probe, u) ? " tight" : ""),
+      onOpen: function(){ openEntryDialog(u.id); }
+    }));
+  });
+
+  left.classList.toggle("is-empty", !left.querySelector(".flownode"));
+  right.classList.toggle("is-empty", !right.querySelector(".flownode"));
+  scheduleFlowDraw();
+}
+
+/* Connectors need laid-out boxes, so they wait for a frame - with the same
+   timer fallback the timeline links use, since frames are not guaranteed. */
+var flowFrame = null, flowTimer = null;
+function scheduleFlowDraw(){
+  if(flowFrame !== null || flowTimer !== null) return;
+  function run(){
+    if(flowFrame !== null){ cancelAnimationFrame(flowFrame); flowFrame = null; }
+    if(flowTimer !== null){ clearTimeout(flowTimer); flowTimer = null; }
+    drawFlowWires();
+  }
+  flowFrame = requestAnimationFrame(run);
+  flowTimer = setTimeout(run, 24);
+}
+
+function drawFlowWires(){
+  var flow = $("#e-dep-flow");
+  if(!flow || flow.hidden) return;
+  var old = flow.querySelector("svg.flowwires");
+  if(old) old.remove();
+
+  var mid = flow.querySelector('[data-col="mid"] .flownode');
+  if(!mid) return;
+  var box = flow.getBoundingClientRect();
+  if(!box.width) return;
+
+  var svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("class","flowwires");
+  svg.setAttribute("aria-hidden","true");
+  svg.setAttribute("width", box.width);
+  svg.setAttribute("height", box.height);
+  svg.setAttribute("viewBox","0 0 "+box.width+" "+box.height);
+
+  var midR = mid.getBoundingClientRect();
+  /* Below the narrow breakpoint the columns stack, so the wires run
+     top-to-bottom instead of left-to-right. */
+  var stacked = flow.getBoundingClientRect().width < 520 ||
+                getComputedStyle(flow).flexDirection === "column";
+
+  function wire(fromEl, toEl, tight){
+    var a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    var g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","flowwire"+(tight?" tight":""));
+    var d, hx, hy, head;
+    if(stacked){
+      var fx = a.left + a.width/2 - box.left, fy = a.bottom - box.top;
+      var tx = b.left + b.width/2 - box.left, ty = b.top - box.top - 5;
+      var my = fy + (ty - fy)/2;
+      d = "M"+fx+","+fy+" V"+my+" H"+tx+" V"+ty;
+      hx = tx; hy = ty + 5; head = "M"+hx+","+hy+" l-4,-6 h8 z";
+    }else{
+      var f2 = a.right - box.left, fy2 = a.top + a.height/2 - box.top;
+      var t2 = b.left - box.left - 5, ty2 = b.top + b.height/2 - box.top;
+      var mx = f2 + (t2 - f2)/2;
+      d = "M"+f2+","+fy2+" H"+mx+" V"+ty2+" H"+t2;
+      head = "M"+(t2+5)+","+ty2+" l-6,-4 v8 z";
+    }
+    var path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+    g.appendChild(path);
+    var arrow = document.createElementNS("http://www.w3.org/2000/svg","path");
+    arrow.setAttribute("class","arrow");
+    arrow.setAttribute("d", head);
+    g.appendChild(arrow);
+    svg.appendChild(g);
+  }
+
+  Array.prototype.slice.call(flow.querySelectorAll('[data-col="left"] .flownode'))
+    .forEach(function(node){ wire(node, mid, node.classList.contains("tight")); });
+  Array.prototype.slice.call(flow.querySelectorAll('[data-col="right"] .flownode'))
+    .forEach(function(node){ wire(mid, node, node.classList.contains("tight")); });
+
+  flow.appendChild(svg);
 }
 
 function addDepRef(){
@@ -4041,7 +4239,7 @@ function wire(){
   var resizeTimer = null;
   window.addEventListener("resize", function(){
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(applyMetrics, 80);
+    resizeTimer = setTimeout(function(){ applyMetrics(); scheduleFlowDraw(); }, 80);
   });
 
   $("#f-search").addEventListener("input", function(){ ui.search = this.value.trim(); renderDetail(); });
@@ -4129,8 +4327,13 @@ function wire(){
     if(ev.key === "Enter"){ ev.preventDefault(); addDepText(); }
   });
   /* The tight-link warning should track the dates being edited. */
-  ["e-start-year","e-start-q","e-milestone"].forEach(function(id){
+  ["e-start-year","e-start-q","e-end-year","e-end-q","e-milestone"].forEach(function(id){
     $("#"+id).addEventListener("change", renderDepEditor);
+  });
+  /* Keep the centre of the flow reading what is actually in the name field. */
+  $("#e-title").addEventListener("input", function(){
+    var node = document.querySelector('#e-dep-flow [data-col="mid"] .flownode .t span');
+    if(node) node.textContent = this.value.trim() || "This initiative";
   });
   $("#e-duplicate").addEventListener("click", duplicateEntry);
   $("#e-remove-view").addEventListener("click", function(){
