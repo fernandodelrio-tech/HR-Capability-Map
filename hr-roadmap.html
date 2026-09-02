@@ -513,6 +513,35 @@ form.is-view .depchip button{display:none}
 .depneeded:empty{display:none}
 .depneeded strong{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase}
 
+/* ---------- Sequenced plan ----------
+   One flat list ordered by computed start, so the lane travels with the
+   row as a label rather than as a grouping band. */
+.seqcat{
+  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--ink);background:var(--surface-sunk);
+  border-radius:var(--r-pill);padding:2px 9px 2px 6px;max-width:190px;
+}
+.seqcat i{width:8px;height:8px;border-radius:3px;background:var(--lane,var(--gray));flex:0 0 auto}
+.seqcat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seqshift{
+  display:inline-flex;align-items:center;flex:0 0 auto;
+  font-size:10.5px;font-weight:700;border-radius:var(--r-pill);padding:1px 8px;
+}
+.seqshift.later{background:var(--dawn);color:#000}
+.seqshift.earlier{background:var(--mist);color:#000}
+.gbar.ghost{
+  background:transparent;box-shadow:none;
+  border:1px dashed var(--c,var(--gray));opacity:.72;z-index:0;
+}
+.gbar.ghost .lbl,.gbar.ghost .fill,.gbar.ghost .gbar-status{display:none}
+.gbar.ghost::after{
+  content:"planned";font-size:10px;font-weight:600;color:var(--ink-soft);
+  padding-left:2px;overflow:hidden;white-space:nowrap;
+}
+.seqrow .gcell-label{padding-left:14px}
+.seqempty{padding:56px 24px;text-align:center;color:var(--ink-soft)}
+
 /* ---------- Dependency flow ----------
    HTML nodes with an SVG layer behind them: the boxes keep real text
    truncation, hover and click, and only the connectors are drawn. */
@@ -855,6 +884,7 @@ form:not(.is-view) .view-only{display:none}
     <nav class="tabs" role="tablist" aria-label="Views">
       <button class="tab" role="tab" id="tab-detail" aria-selected="true" aria-controls="view-detail" data-view="detail">Detailed Gantt</button>
       <button class="tab" role="tab" id="tab-exec" aria-selected="false" aria-controls="view-exec" data-view="exec">Executive View</button>
+      <button class="tab" role="tab" id="tab-sequence" aria-selected="false" aria-controls="view-sequence" data-view="sequence">Sequenced Plan</button>
       <button class="tab" role="tab" id="tab-admin" aria-selected="false" aria-controls="view-admin" data-view="admin">Admin Console</button>
     </nav>
     <button class="btn btn-quiet btn-icon headertoggle" id="btn-header" type="button"
@@ -968,6 +998,30 @@ form:not(.is-view) .view-only{display:none}
         <div class="gantt exec-rollup" id="exec-gantt"></div>
       </div>
       <div class="legend" id="exec-legend"></div>
+    </section>
+
+    <!-- ============ SEQUENCED PLAN ============ -->
+    <section class="view" id="view-sequence" role="tabpanel" aria-labelledby="tab-sequence">
+      <div class="exec-head">
+        <h2>Sequenced plan</h2>
+        <p id="seq-sub"></p>
+      </div>
+      <div class="kpis" id="seq-kpis"></div>
+      <div class="toolbar toolbar-compact">
+        <div class="searchwrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input class="control search" id="q-search" type="search"
+                 placeholder="Search initiatives&hellip;" aria-label="Search initiatives" />
+        </div>
+        <label class="checkline"><input type="checkbox" id="q-ghost" checked /> Show planned position</label>
+        <label class="checkline"><input type="checkbox" id="q-moved" /> Only what moved</label>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-quiet" id="q-print" type="button">Print / PDF</button>
+      </div>
+      <div class="scroller" id="seq-scroller">
+        <div class="gantt" id="seq-gantt"></div>
+      </div>
+      <div class="legend" id="seq-legend"></div>
     </section>
 
     <!-- ============ ADMIN CONSOLE ============ -->
@@ -1383,6 +1437,9 @@ var ui = {
   rollup:"theme",
   expanded:{},
   adminPanel:"lanes",
+  seqSearch:"",
+  seqGhost:true,
+  seqMovedOnly:false,
   adminEntrySearch:"",
   importDraft:""
 };
@@ -1823,11 +1880,15 @@ function setLabelWidth(px){
 function computeColW(){
   var cols = colCount();
   if(!cols) return ui.zoom;
-  var sc = $(ui.view === "exec" ? "#exec-scroller" : "#detail-scroller");
+  var panes = {detail:"#detail-scroller", exec:"#exec-scroller", sequence:"#seq-scroller"};
+  var sc = $(panes[ui.view] || "#detail-scroller");
   var avail = sc ? sc.clientWidth : 0;
-  if(!avail){                                   /* the pane is hidden - ask the other one */
-    var other = $(ui.view === "exec" ? "#detail-scroller" : "#exec-scroller");
-    avail = other ? other.clientWidth : 0;
+  if(!avail){                                   /* the pane is hidden - ask another */
+    ["#detail-scroller","#exec-scroller","#seq-scroller"].some(function(sel){
+      var o = $(sel);
+      if(o && o.clientWidth){ avail = o.clientWidth; return true; }
+      return false;
+    });
   }
   if(!avail) return ui.zoom;
   /* 1px of slack so a fractional total can never provoke a scrollbar. */
@@ -1838,7 +1899,7 @@ function computeColW(){
 /* One place that pushes the live measurements onto both timelines. */
 function applyMetrics(){
   ui.colw = computeColW();
-  ["#detail-gantt","#exec-gantt"].forEach(function(sel){
+  ["#detail-gantt","#exec-gantt","#seq-gantt"].forEach(function(sel){
     var g = $(sel);
     if(!g) return;
     g.style.setProperty("--label-w", ui.labelW+"px");
@@ -2341,16 +2402,23 @@ function scheduleDepDraw(){
   depTimer = setTimeout(run, 32);
 }
 
-function barOf(id){
-  return document.querySelector('#detail-gantt .grow[data-id="'+id+'"] .gbar');
+/* The ghost outline in the sequenced plan is not a real bar - links must
+   anchor to the solid one. */
+function barOf(id, host){
+  return document.querySelector(host+' .grow[data-id="'+id+'"] .gbar:not(.ghost)');
 }
-function rowVisible(id){
-  var row = document.querySelector('#detail-gantt .grow[data-id="'+id+'"]');
+function rowVisible(id, host){
+  var row = document.querySelector(host+' .grow[data-id="'+id+'"]');
   return !!row && !row.hidden;
 }
 
 function drawDepLinks(){
-  var body = $("#detail-gantt .gbody");
+  drawLinksIn("#detail-gantt", depIsTight);
+  drawLinksIn("#seq-gantt", function(){ return false; });   /* nothing is tight once sequenced */
+}
+
+function drawLinksIn(host, tightFn){
+  var body = $(host+" .gbody");
   if(!body) return;
   var svg = body.querySelector("svg.deplinks");
 
@@ -2373,16 +2441,16 @@ function drawDepLinks(){
   while(svg.firstChild) svg.removeChild(svg.firstChild);
 
   state.entries.forEach(function(succ){
-    if(!rowVisible(succ.id)) return;
-    var sBar = barOf(succ.id);
+    if(!rowVisible(succ.id, host)) return;
+    var sBar = barOf(succ.id, host);
     if(!sBar) return;
     (succ.deps || []).forEach(function(d){
       if(!d.ref) return;
       var pred = byId(state.entries, d.ref);
-      if(!pred || !rowVisible(pred.id)) return;
-      var pBar = barOf(pred.id);
+      if(!pred || !rowVisible(pred.id, host)) return;
+      var pBar = barOf(pred.id, host);
       if(!pBar) return;
-      svg.appendChild(linkPath(pBar, sBar, box, pred, succ));
+      svg.appendChild(linkPath(pBar, sBar, box, pred, succ, tightFn(pred, succ)));
     });
   });
 }
@@ -2390,12 +2458,11 @@ function drawDepLinks(){
 /* Finish-to-start elbow. When the dependent starts to the left of where its
    predecessor finishes, the line has to double back, so it drops into the
    gap between the two rows before returning. */
-function linkPath(pBar, sBar, box, pred, succ){
+function linkPath(pBar, sBar, box, pred, succ, tight){
   var p = pBar.getBoundingClientRect(), q = sBar.getBoundingClientRect();
   var fx = p.right - box.left, fy = p.top + p.height/2 - box.top;
   var tx = q.left  - box.left, ty = q.top + q.height/2 - box.top;
   var g = document.createElementNS("http://www.w3.org/2000/svg","g");
-  var tight = depIsTight(pred, succ);
   g.setAttribute("class", "deplink" + (tight ? " tight" : ""));
   g.setAttribute("data-from", pred.id);
   g.setAttribute("data-to", succ.id);
@@ -2421,8 +2488,8 @@ function linkPath(pBar, sBar, box, pred, succ){
 }
 
 /* Hovering a row lifts its own links out of the rest. */
-function focusDeps(id){
-  var svg = document.querySelector("#detail-gantt svg.deplinks");
+function focusDeps(id, host){
+  var svg = document.querySelector((host || "#detail-gantt")+" svg.deplinks");
   if(!svg) return;
   svg.classList.toggle("has-focus", !!id);
   Array.prototype.slice.call(svg.querySelectorAll(".deplink")).forEach(function(g){
@@ -2723,6 +2790,270 @@ function barKeyMove(ev, entry){
     var again = document.querySelector('#detail-gantt .grow[data-id="'+entry.id+'"] .gbar');
     if(again) again.focus();
   }, 0);
+}
+
+/* ============================================================
+   6c. The sequenced plan
+   Every initiative that waits on something starts when the last of those
+   things resolves; everything else keeps the dates it was given. The
+   effect cascades, so a predecessor that moved carries its successors
+   with it.
+   ============================================================ */
+function sequencedSchedule(){
+  var out = {}, visiting = {};
+
+  function compute(id){
+    if(out[id]) return out[id];
+    var e = byId(state.entries, id);
+    if(!e) return null;
+    var ps = startCol(e), pe = endCol(e), dur = pe - ps;
+
+    /* The editor refuses loops, but an imported file might carry one.
+       Fall back to the planned dates rather than recursing forever. */
+    if(visiting[id]) return {s:ps, e:pe, dur:dur, moved:0, cyclic:true};
+
+    visiting[id] = 1;
+    var refs = (e.deps || []).filter(function(d){
+      return d.ref && byId(state.entries, d.ref);
+    });
+    var res;
+    if(!refs.length){
+      res = {s:ps, e:pe, dur:dur, moved:0, cyclic:false, planned:[ps,pe]};
+    }else{
+      var latest = -Infinity, cyc = false;
+      refs.forEach(function(d){
+        var r = compute(d.ref);
+        if(!r) return;
+        if(r.cyclic) cyc = true;
+        if(r.e > latest) latest = r.e;
+      });
+      /* Anything caught in - or downstream of - a loop has no honest answer,
+         so it keeps its planned dates and is reported rather than shown at
+         some arbitrary computed position. */
+      var ns = (cyc || latest === -Infinity) ? ps : latest + 1;   /* the quarter after */
+      res = {s:ns, e:ns + dur, dur:dur, moved:ns - ps, cyclic:cyc, planned:[ps,pe]};
+    }
+    delete visiting[id];
+    out[id] = res;
+    return res;
+  }
+
+  state.entries.forEach(function(e){ compute(e.id); });
+  return out;
+}
+
+function seqEntries(sched){
+  var term = ui.seqSearch.trim().toLowerCase();
+  return state.entries.filter(function(e){
+    var r = sched[e.id];
+    if(!r) return false;
+    if(ui.seqMovedOnly && !r.moved) return false;
+    if(!term) return true;
+    return [e.title, e.notes, nameOf(state.lanes,e.laneId), nameOf(state.subLanes,e.subLaneId),
+            nameOf(state.owners,e.ownerId), nameOf(state.statuses,e.statusId)]
+             .join(" ").toLowerCase().indexOf(term) >= 0;
+  }).sort(function(a,b){
+    var ra = sched[a.id], rb = sched[b.id];
+    if(ra.s !== rb.s) return ra.s - rb.s;
+    if(ra.e !== rb.e) return ra.e - rb.e;
+    return a.title.localeCompare(b.title);
+  });
+}
+
+function periodOfCol(i){ var p = colToPeriod(i); return periodLabel(p.y, p.q); }
+
+function seqRow(e, sched){
+  var r = sched[e.id];
+  var lane = byId(state.lanes, e.laneId);
+  var sub = byId(state.subLanes, e.subLaneId);
+  var status = statusOf(e);
+  var colour = (sub && sub.color) || (lane && lane.color) || "#787877";
+
+  var row = el("div","grow seqrow");
+  row.setAttribute("data-id", e.id);
+  row.style.setProperty("--lane", colour);
+
+  var lab = el("div","gcell-label");
+  lab.tabIndex = 0;
+  lab.setAttribute("role","button");
+  lab.setAttribute("aria-label","Open "+e.title);
+  lab.addEventListener("click", function(){ openEntryDialog(e.id); });
+  lab.addEventListener("keydown", function(ev){
+    if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openEntryDialog(e.id); }
+  });
+
+  var text = el("div","gcell-text");
+  var title = el("div","gcell-title");
+  if(e.spotlight){
+    var flag = el("span","flag"); flag.textContent = "★"; flag.title = "Executive spotlight";
+    title.appendChild(flag);
+  }
+  title.appendChild(el("span",null,e.title));
+  if(r.moved){
+    var shift = el("span","seqshift "+(r.moved > 0 ? "later" : "earlier"),
+                   (r.moved > 0 ? "+" : "−") + Math.abs(r.moved) + "q");
+    shift.title = r.moved > 0
+      ? "Starts " + Math.abs(r.moved) + " quarter" + (Math.abs(r.moved)===1?"":"s") + " later than planned"
+      : "Could start " + Math.abs(r.moved) + " quarter" + (Math.abs(r.moved)===1?"":"s") + " earlier than planned";
+    title.appendChild(shift);
+  }
+  text.appendChild(title);
+
+  /* No lanes to group by here, so the category rides with the row. */
+  var meta = el("div","gcell-meta");
+  var cat = el("span","seqcat");
+  cat.appendChild(el("i"));
+  cat.appendChild(el("span",null, (lane ? lane.name : "Unassigned") + (sub ? " · " + sub.name : "")));
+  meta.appendChild(cat);
+  var bits = [];
+  if(status) bits.push(status.name);
+  if(e.ownerId) bits.push(nameOf(state.owners, e.ownerId));
+  bits.push(e.milestone ? periodOfCol(r.s) : periodOfCol(r.s) + " – " + periodOfCol(r.e));
+  meta.appendChild(el("span",null, " " + bits.filter(Boolean).join(" · ")));
+  text.appendChild(meta);
+  lab.appendChild(text);
+  row.appendChild(lab);
+
+  var track = makeTrack();
+  /* The planned span stays behind as an outline, so the drift is visible. */
+  if(ui.seqGhost && r.moved){
+    placeBar(track, r.planned[0], r.planned[1], {
+      color: colour, label: "", extraClass: "ghost",
+      title: "Planned " + periodOfCol(r.planned[0]) + " – " + periodOfCol(r.planned[1])
+    });
+  }
+  var extra = [];
+  if(e.milestone) extra.push("milestone");
+  if(kindOf(e) === "risk") extra.push("at-risk");
+  if(kindOf(e) === "hold") extra.push("on-hold");
+  var bar = placeBar(track, r.s, r.e, {
+    color: colour,
+    label: e.milestone ? "" : e.title,
+    progress: e.milestone ? 0 : e.progress,
+    statusColor: (status && !e.milestone) ? status.color : null,
+    extraClass: extra.join(" "),
+    title: e.title + "\n" + periodOfCol(r.s) + " – " + periodOfCol(r.e) +
+           (r.moved ? "\nPlanned " + periodOfCol(r.planned[0]) + " – " + periodOfCol(r.planned[1]) : "")
+  });
+  if(bar){
+    bar.tabIndex = 0;
+    bar.setAttribute("role","button");
+    bar.addEventListener("click", function(){ openEntryDialog(e.id); });
+    bar.addEventListener("keydown", function(ev){
+      if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openEntryDialog(e.id); }
+    });
+  }
+  row.appendChild(track);
+  row.addEventListener("mouseenter", function(){ focusDeps(e.id, "#seq-gantt"); });
+  row.addEventListener("mouseleave", function(){ focusDeps(null, "#seq-gantt"); });
+  return row;
+}
+
+function renderSequence(){
+  var host = $("#seq-gantt");
+  if(!host) return;
+  host.innerHTML = "";
+  applyMetrics();
+
+  var sched = sequencedSchedule();
+  renderSeqKpis(sched);
+
+  host.appendChild(ganttHeader());
+  var rows = seqEntries(sched);
+  if(!rows.length){
+    host.appendChild(el("div","seqempty",
+      state.entries.length ? "Nothing matches that." : "The roadmap is empty."));
+    renderSeqLegend();
+    return;
+  }
+  var body = el("div","gbody");
+  rows.forEach(function(e){ body.appendChild(seqRow(e, sched)); });
+  var marker = todayMarker();
+  if(marker) body.appendChild(marker);
+  host.appendChild(body);
+  scheduleDepDraw();
+  renderSeqLegend();
+}
+
+function renderSeqKpis(sched){
+  var host = $("#seq-kpis");
+  host.innerHTML = "";
+  var all = state.entries;
+  var later = 0, earlier = 0, beyond = 0, latest = -Infinity, cyclic = 0;
+  var cols = colCount();
+  all.forEach(function(e){
+    var r = sched[e.id];
+    if(!r) return;
+    if(r.moved > 0) later++;
+    if(r.moved < 0) earlier++;
+    if(r.e > cols - 1) beyond++;
+    if(r.cyclic) cyclic++;
+    if(r.e > latest) latest = r.e;
+  });
+  var chained = all.filter(function(e){
+    return (e.deps||[]).some(function(d){ return d.ref; });
+  }).length;
+
+  [
+    {n:all.length, k:"Initiatives", s:"All of them, in one list"},
+    {n:chained,    k:"Waiting on something", s:"Start driven by a dependency"},
+    {n:later,      k:"Start later", s:"Than the date they were given", accent:later>0},
+    {n:earlier,    k:"Could start earlier", s:"Dependencies clear before the plan"},
+    {n:beyond,     k:"Past the horizon", s:"Finish after "+state.config.endYear, accent:beyond>0}
+  ].forEach(function(c){
+    var box = el("div","kpi");
+    box.appendChild(el("div","n"+(c.accent?" accent":""), String(c.n)));
+    box.appendChild(el("div","k", c.k));
+    box.appendChild(el("div","s", c.s));
+    host.appendChild(box);
+  });
+
+  $("#seq-sub").textContent =
+    "Every initiative on one timeline, ordered by when it can actually start. " +
+    "Anything waiting on another initiative begins the quarter after the last of those finishes; " +
+    "everything else keeps the dates it was given." +
+    (cyclic ? "  " + cyclic + " could not be sequenced because their dependencies form a loop." : "");
+}
+
+function renderSeqLegend(){
+  var host = $("#seq-legend");
+  host.innerHTML = "";
+  var g1 = el("div","grp");
+  g1.appendChild(el("strong",null,"Lanes"));
+  state.lanes.forEach(function(l){
+    var it = el("span","item");
+    var sw = el("i","sw"); sw.style.setProperty("--c", l.color);
+    it.appendChild(sw); it.appendChild(el("span",null,l.name));
+    g1.appendChild(it);
+  });
+  host.appendChild(g1);
+
+  var g2 = el("div","grp");
+  g2.appendChild(el("strong",null,"Shift"));
+  var a = el("span","item");
+  var s1 = el("span","seqshift later","+2q"); a.appendChild(s1);
+  a.appendChild(el("span",null,"Starts later than planned"));
+  g2.appendChild(a);
+  var b = el("span","item");
+  var s2 = el("span","seqshift earlier","\u22121q"); b.appendChild(s2);
+  b.appendChild(el("span",null,"Could start earlier"));
+  g2.appendChild(b);
+  var c = el("span","item");
+  var dash = el("i","sw");
+  dash.style.background = "transparent";
+  dash.style.border = "1px dashed var(--gray)";
+  c.appendChild(dash);
+  c.appendChild(el("span",null,"Where it sits on the plan"));
+  g2.appendChild(c);
+  host.appendChild(g2);
+
+  var g3 = el("div","grp");
+  g3.appendChild(el("strong",null,"Links"));
+  var l1 = el("span","item");
+  l1.appendChild(depSwatch(false));
+  l1.appendChild(el("span",null,"Waits on"));
+  g3.appendChild(l1);
+  host.appendChild(g3);
 }
 
 /* ============================================================
@@ -4205,6 +4536,7 @@ function renderAll(){
   refreshFilterBadge();
   renderDetail();
   renderExec();
+  renderSequence();
   renderAdmin();
 }
 
@@ -4216,7 +4548,7 @@ function resetFilters(){
   renderAll();
 }
 
-var VIEWS = {detail:1, exec:1, admin:1};
+var VIEWS = {detail:1, exec:1, sequence:1, admin:1};
 
 function setView(v, fromHash){
   if(!VIEWS[v]) v = "detail";
@@ -4303,6 +4635,14 @@ function wire(){
     keys.forEach(function(k){ ui.expanded[k] = true; });
     renderExec();
   });
+  $("#q-search").addEventListener("input", function(){ ui.seqSearch = this.value; renderSequence(); });
+  $("#q-ghost").addEventListener("change", function(){ ui.seqGhost = this.checked; renderSequence(); });
+  $("#q-moved").addEventListener("change", function(){ ui.seqMovedOnly = this.checked; renderSequence(); });
+  $("#q-print").addEventListener("click", function(){
+    try{ window.print(); }
+    catch(err){ toast("Printing is blocked here - open the file directly to print"); }
+  });
+
   $("#btn-print").addEventListener("click", function(){
     try{ window.print(); }
     catch(err){ toast("Printing is blocked here - open the file directly to print"); }
