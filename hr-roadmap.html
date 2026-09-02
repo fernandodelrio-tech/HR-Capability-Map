@@ -1119,6 +1119,7 @@ form:not(.is-view) .view-only{display:none}
   <div class="dlg-body"><p id="c-msg" style="white-space:pre-line;margin:0;max-width:62ch"></p></div>
   <div class="dlg-foot">
     <span class="spacer"></span>
+    <button class="btn btn-quiet" type="button" id="c-alt" hidden>Discard</button>
     <button class="btn btn-quiet" type="button" id="c-cancel">Cancel</button>
     <button class="btn btn-danger" type="button" id="c-ok">Remove</button>
   </div>
@@ -1528,13 +1529,27 @@ function readableOn(hex){
 }
 /* In-app confirmation. A sandboxed frame can suppress window.confirm(),
    which would silently swallow a removal, so the app owns this dialog. */
-var confirmCb = null;
-function ask(title, msg, okLabel, cb){
+var confirmCb = null, confirmAltCb = null;
+
+/* opts.altLabel adds a third answer between Cancel and the main action -
+   used for "discard" when the alternative to confirming is not cancelling. */
+function ask(title, msg, okLabel, cb, opts){
   $("#c-title").textContent = title;
   $("#c-msg").textContent = msg;
   $("#c-ok").textContent = okLabel || "Confirm";
+  $("#c-ok").classList.toggle("btn-danger", !(opts && opts.okPrimary));
+  $("#c-ok").classList.toggle("btn-primary", !!(opts && opts.okPrimary));
+  var alt = $("#c-alt");
+  if(opts && opts.altLabel){
+    alt.hidden = false;
+    alt.textContent = opts.altLabel;
+    confirmAltCb = opts.onAlt || null;
+  }else{
+    alt.hidden = true;
+    confirmAltCb = null;
+  }
   confirmCb = cb;
-  $("#dlg-confirm").showModal();
+  if(!$("#dlg-confirm").open) $("#dlg-confirm").showModal();
   setTimeout(function(){ $("#c-ok").focus(); }, 30);
 }
 
@@ -3450,6 +3465,25 @@ function fillQuarters(sel, selected){
 var editingEntryId = null;
 var entryMode = "view";
 var draftDeps = [];      /* the dialog edits a copy; save writes it back */
+var entryPristine = "";  /* the form as it looked when editing began */
+
+/* Every editable value in one string. Comparing two of these is a cheaper
+   and far less error-prone dirty check than diffing field by field, and it
+   picks up new fields automatically. */
+function formSnapshot(){
+  return JSON.stringify([
+    $("#e-title").value.trim(), $("#e-lane").value, $("#e-sublane").value,
+    $("#e-theme").value, $("#e-owner").value, $("#e-platform").value,
+    $("#e-status").value, $("#e-priority").value,
+    $("#e-start-year").value, $("#e-start-q").value,
+    $("#e-end-year").value, $("#e-end-q").value,
+    $("#e-progress").value, $("#e-milestone").checked, $("#e-spotlight").checked,
+    $("#e-notes").value.trim(), draftDeps
+  ]);
+}
+function entryIsDirty(){
+  return entryMode === "edit" && formSnapshot() !== entryPristine;
+}
 
 function syncSubLaneField(selectedSub){
   var lane = byId(state.lanes, $("#e-lane").value);
@@ -3653,6 +3687,8 @@ function setEntryMode(mode){
   /* A brand-new initiative has nothing to view, duplicate or remove yet. */
   $("#e-duplicate").style.display = e ? "" : "none";
   $("#e-remove-view").style.display = e ? "" : "none";
+
+  if(entryMode === "edit") entryPristine = formSnapshot();
 }
 
 function syncMilestoneField(){
@@ -3668,9 +3704,9 @@ function saveEntry(){
   errNode.classList.remove("show");
 
   var title = $("#e-title").value.trim();
-  if(!title){ errNode.textContent = "Give the initiative a name."; errNode.classList.add("show"); $("#e-title").focus(); return; }
+  if(!title){ errNode.textContent = "Give the initiative a name."; errNode.classList.add("show"); $("#e-title").focus(); return false; }
   var laneId = $("#e-lane").value;
-  if(!laneId){ errNode.textContent = "Choose a lane."; errNode.classList.add("show"); return; }
+  if(!laneId){ errNode.textContent = "Choose a lane."; errNode.classList.add("show"); return false; }
 
   var milestone = $("#e-milestone").checked;
   var sy = Number($("#e-start-year").value), sq = Number($("#e-start-q").value);
@@ -3678,7 +3714,7 @@ function saveEntry(){
   var eq = milestone ? sq : Number($("#e-end-q").value);
   if(!milestone && (ey*4+eq) < (sy*4+sq)){
     errNode.textContent = "The end quarter cannot be before the start quarter.";
-    errNode.classList.add("show"); return;
+    errNode.classList.add("show"); return false;
   }
 
   var lane = byId(state.lanes, laneId);
@@ -3712,6 +3748,26 @@ function saveEntry(){
   /* Back to the detail sheet so the saved values are visible straight away. */
   populateEntryForm(editingEntryId);
   setEntryMode("view");
+  return true;
+}
+
+/* Clicking away, pressing Escape and the close buttons all come through
+   here, so unsaved work is protected the same way whichever you use. */
+function requestCloseEntry(){
+  if(!entryIsDirty()){ $("#dlg-entry").close(); return; }
+  var e = editingEntryId ? byId(state.entries, editingEntryId) : null;
+  ask("Save your changes?",
+      (e ? "“" + e.title + "” has" : "This new initiative has") + " edits you have not saved yet.",
+      "Save changes",
+      function(){ if(saveEntry()) $("#dlg-entry").close(); },
+      {
+        okPrimary: true,
+        altLabel: "Discard",
+        onAlt: function(){
+          if(editingEntryId){ populateEntryForm(editingEntryId); setEntryMode("view"); }
+          $("#dlg-entry").close();
+        }
+      });
 }
 
 function cancelEntryEdit(){
@@ -4114,17 +4170,56 @@ function wire(){
   });
 
   $("#c-ok").addEventListener("click", function(){
-    var cb = confirmCb; confirmCb = null;
+    var cb = confirmCb; confirmCb = null; confirmAltCb = null;
+    $("#dlg-confirm").close();
+    if(cb) cb();
+  });
+  $("#c-alt").addEventListener("click", function(){
+    var cb = confirmAltCb;
+    confirmCb = null; confirmAltCb = null;
     $("#dlg-confirm").close();
     if(cb) cb();
   });
   $("#c-cancel").addEventListener("click", function(){
-    confirmCb = null; $("#dlg-confirm").close();
+    confirmCb = null; confirmAltCb = null; $("#dlg-confirm").close();
   });
-  $("#dlg-confirm").addEventListener("close", function(){ confirmCb = null; });
+  $("#dlg-confirm").addEventListener("close", function(){ confirmCb = null; confirmAltCb = null; });
 
   $$("[data-close]").forEach(function(b){
-    b.addEventListener("click", function(){ b.closest("dialog").close(); });
+    b.addEventListener("click", function(){
+      var dlg = b.closest("dialog");
+      if(dlg.id === "dlg-entry") requestCloseEntry(); else dlg.close();
+    });
+  });
+
+  /* A dialog reports clicks on its own backdrop as clicks on itself. Requiring
+     the press to start there as well stops a text selection that runs out of
+     the dialog from being read as "clicked away". */
+  function closeOnBackdrop(dlg, handler){
+    var startedOutside = false;
+    function outside(ev){
+      var r = dlg.getBoundingClientRect();
+      return ev.clientX < r.left || ev.clientX > r.right ||
+             ev.clientY < r.top  || ev.clientY > r.bottom;
+    }
+    dlg.addEventListener("pointerdown", function(ev){
+      startedOutside = (ev.target === dlg) && outside(ev);
+    });
+    dlg.addEventListener("click", function(ev){
+      var go = startedOutside && ev.target === dlg;
+      startedOutside = false;
+      if(go) handler();
+    });
+  }
+  closeOnBackdrop($("#dlg-entry"), requestCloseEntry);
+  closeOnBackdrop($("#dlg-value"), function(){ $("#dlg-value").close(); });
+  closeOnBackdrop($("#dlg-confirm"), function(){
+    confirmCb = null; confirmAltCb = null; $("#dlg-confirm").close();
+  });
+
+  /* Escape must not slip past the unsaved-work question either. */
+  $("#dlg-entry").addEventListener("cancel", function(ev){
+    if(entryIsDirty()){ ev.preventDefault(); requestCloseEntry(); }
   });
 
   document.addEventListener("keydown", function(ev){
