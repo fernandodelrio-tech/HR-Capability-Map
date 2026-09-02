@@ -540,6 +540,34 @@ form.is-view .depchip button{display:none}
   padding-left:2px;overflow:hidden;white-space:nowrap;
 }
 .seqrow .gcell-label{padding-left:14px}
+/* The chain reads down the page: an elbow into each row, a rule where a
+   new chain begins. */
+.treeguide{display:flex;align-self:stretch;flex:0 0 auto}
+.treeguide i{width:17px;position:relative;flex:0 0 auto}
+.treeguide i.v::before{
+  content:"";position:absolute;left:8px;top:0;bottom:0;width:1.5px;background:var(--silver);
+}
+.treeguide i.elbow::before{
+  content:"";position:absolute;left:8px;top:0;height:50%;width:1.5px;background:var(--silver);
+}
+.treeguide i.elbow.more::before{height:auto;bottom:0}
+.treeguide i.elbow::after{
+  content:"";position:absolute;left:8px;top:50%;width:10px;height:1.5px;background:var(--silver);
+  border-radius:1px;
+}
+.seqrow[data-depth] .gcell-label{padding-left:8px}
+.seqrow.chain-start{border-top:1px solid var(--outline)}
+.seqrow.chain-start:first-child{border-top:0}
+.chaintag{
+  display:inline-flex;align-items:center;flex:0 0 auto;
+  font-size:10px;font-weight:700;letter-spacing:.04em;
+  background:var(--surface-cool);color:var(--ink);border-radius:var(--r-pill);padding:1px 8px;
+}
+.seqalso{
+  display:block;font-size:10.5px;color:var(--ink-soft);font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.seqrow[data-depth] .gbar{box-shadow:var(--elev-1)}
 .seqempty{padding:56px 24px;text-align:center;color:var(--ink-soft)}
 
 /* ---------- Dependency flow ----------
@@ -1013,6 +1041,10 @@ form:not(.is-view) .view-only{display:none}
           <input class="control search" id="q-search" type="search"
                  placeholder="Search initiatives&hellip;" aria-label="Search initiatives" />
         </div>
+        <div class="segmented" role="group" aria-label="Arrangement">
+          <button data-arrange="chain" type="button" aria-pressed="true" title="Group linked initiatives into chains">Chains</button>
+          <button data-arrange="start" type="button" title="One flat list ordered by start date">By date</button>
+        </div>
         <label class="checkline"><input type="checkbox" id="q-ghost" checked /> Show planned position</label>
         <label class="checkline"><input type="checkbox" id="q-moved" /> Only what moved</label>
         <div class="toolbar-spacer"></div>
@@ -1439,13 +1471,14 @@ var ui = {
   adminPanel:"lanes",
   seqSearch:"",
   seqGhost:true,
+  seqArrange:"chain",
   seqMovedOnly:false,
   adminEntrySearch:"",
   importDraft:""
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps, seqArrange:ui.seqArrange})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1458,6 +1491,7 @@ function loadView(){
     ui.filtersOpen = !!v.filtersOpen;
     if(typeof v.headerOpen === "boolean") ui.headerOpen = v.headerOpen;
     if(typeof v.showDeps === "boolean") ui.showDeps = v.showDeps;
+    if(v.seqArrange === "chain" || v.seqArrange === "start") ui.seqArrange = v.seqArrange;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
 
@@ -2842,9 +2876,93 @@ function sequencedSchedule(){
   return out;
 }
 
-function seqEntries(sched){
+/* Lay the rows out so a dependency sits directly above what it enables.
+   Linked initiatives form a chain, the chain is walked parent-first, and
+   each row is indented under the predecessor it follows - so the sequence
+   is read down the page rather than traced along arrows. */
+function seqLayout(sched){
+  var entries = state.entries;
+  var byIdMap = {};
+  entries.forEach(function(e){ byIdMap[e.id] = e; });
+
+  var waitsOn = {}, feeds = {};
+  entries.forEach(function(e){ waitsOn[e.id] = []; feeds[e.id] = []; });
+  entries.forEach(function(e){
+    (e.deps || []).forEach(function(d){
+      if(!d.ref || !byIdMap[d.ref]) return;
+      waitsOn[e.id].push(d.ref);
+      feeds[d.ref].push(e.id);
+    });
+  });
+
+  /* How deep in its chain each initiative sits: one below its last predecessor. */
+  var depth = {}, guard = {};
+  function depthOf(id){
+    if(depth[id] != null) return depth[id];
+    if(guard[id]) return 0;                  /* a loop has no depth to speak of */
+    guard[id] = 1;
+    var d = 0;
+    waitsOn[id].forEach(function(pid){ d = Math.max(d, depthOf(pid) + 1); });
+    delete guard[id];
+    return (depth[id] = d);
+  }
+  entries.forEach(function(e){ depthOf(e.id); });
+
+  /* Chains are the connected groups - following links in either direction. */
+  var chainOf = {}, chains = [];
+  entries.forEach(function(e){
+    if(chainOf[e.id] != null) return;
+    var k = chains.length, members = [], stack = [e.id];
+    chainOf[e.id] = k;
+    while(stack.length){
+      var cur = stack.pop();
+      members.push(cur);
+      waitsOn[cur].concat(feeds[cur]).forEach(function(nb){
+        if(chainOf[nb] == null){ chainOf[nb] = k; stack.push(nb); }
+      });
+    }
+    chains.push(members);
+  });
+
+  function startOf(id){ return sched[id] ? sched[id].s : 0; }
+  function byStart(a, b){
+    var d = startOf(a) - startOf(b);
+    if(d) return d;
+    return byIdMap[a].title.localeCompare(byIdMap[b].title);
+  }
+
+  chains.sort(function(a, b){
+    return Math.min.apply(null, a.map(startOf)) - Math.min.apply(null, b.map(startOf));
+  });
+
+  var order = [], placed = {}, parentOf = {};
+  chains.forEach(function(members){
+    var inChain = {};
+    members.forEach(function(id){ inChain[id] = 1; });
+    var roots = members.filter(function(id){ return !waitsOn[id].length; }).sort(byStart);
+
+    function place(id, parent){
+      if(placed[id]) return;
+      /* Wait until everything it depends on is already on the page. */
+      if(!waitsOn[id].every(function(p){ return placed[p]; })) return;
+      placed[id] = 1;
+      parentOf[id] = parent || null;
+      order.push(id);
+      feeds[id].slice().sort(byStart).forEach(function(cid){ place(cid, id); });
+    }
+    roots.forEach(function(id){ place(id, null); });
+    /* Anything left is inside a loop - place it by date so it is not lost. */
+    members.filter(function(id){ return !placed[id]; }).sort(byStart)
+      .forEach(function(id){ placed[id] = 1; parentOf[id] = null; order.push(id); });
+  });
+
+  return {order:order, depth:depth, parentOf:parentOf, chainOf:chainOf,
+          chains:chains, feeds:feeds, waitsOn:waitsOn};
+}
+
+function seqEntries(sched, layout){
   var term = ui.seqSearch.trim().toLowerCase();
-  return state.entries.filter(function(e){
+  function keep(e){
     var r = sched[e.id];
     if(!r) return false;
     if(ui.seqMovedOnly && !r.moved) return false;
@@ -2852,17 +2970,53 @@ function seqEntries(sched){
     return [e.title, e.notes, nameOf(state.lanes,e.laneId), nameOf(state.subLanes,e.subLaneId),
             nameOf(state.owners,e.ownerId), nameOf(state.statuses,e.statusId)]
              .join(" ").toLowerCase().indexOf(term) >= 0;
-  }).sort(function(a,b){
-    var ra = sched[a.id], rb = sched[b.id];
-    if(ra.s !== rb.s) return ra.s - rb.s;
-    if(ra.e !== rb.e) return ra.e - rb.e;
-    return a.title.localeCompare(b.title);
+  }
+
+  if(ui.seqArrange === "start"){
+    return state.entries.filter(keep).sort(function(a,b){
+      var ra = sched[a.id], rb = sched[b.id];
+      if(ra.s !== rb.s) return ra.s - rb.s;
+      if(ra.e !== rb.e) return ra.e - rb.e;
+      return a.title.localeCompare(b.title);
+    }).map(function(e){ return {entry:e, depth:0, guide:[], chain:null, parent:null}; });
+  }
+
+  var shown = {};
+  state.entries.forEach(function(e){ if(keep(e)) shown[e.id] = 1; });
+
+  /* Filtering can hide a parent; a row is only indented under a parent that
+     is still on screen, so nothing is left dangling under nothing. */
+  var out = [], viewDepth = {};
+  layout.order.forEach(function(id){
+    if(!shown[id]) return;
+    var e = byId(state.entries, id);
+    var parent = layout.parentOf[id];
+    var d = (parent && shown[parent]) ? (viewDepth[parent] + 1) : 0;
+    viewDepth[id] = d;
+    out.push({entry:e, depth:d, chain:layout.chainOf[id],
+              parent:(parent && shown[parent]) ? parent : null});
   });
+
+  /* Tree guides: for each ancestor level, does the branch continue below? */
+  out.forEach(function(row, i){
+    var guide = [];
+    for(var lvl = 0; lvl < row.depth; lvl++){
+      var more = false;
+      for(var j = i + 1; j < out.length; j++){
+        if(out[j].depth <= lvl){ break; }
+        if(out[j].depth === lvl + 1){ more = true; break; }
+      }
+      guide.push(lvl === row.depth - 1 ? (more ? "elbow more" : "elbow") : (more ? "v" : ""));
+    }
+    row.guide = guide;
+  });
+  return out;
 }
 
 function periodOfCol(i){ var p = colToPeriod(i); return periodLabel(p.y, p.q); }
 
-function seqRow(e, sched){
+function seqRow(item, sched, layout){
+  var e = item.entry;
   var r = sched[e.id];
   var lane = byId(state.lanes, e.laneId);
   var sub = byId(state.subLanes, e.subLaneId);
@@ -2872,8 +3026,16 @@ function seqRow(e, sched){
   var row = el("div","grow seqrow");
   row.setAttribute("data-id", e.id);
   row.style.setProperty("--lane", colour);
+  if(item.chain != null) row.setAttribute("data-chain", item.chain);
+  if(item.depth) row.setAttribute("data-depth", item.depth);
+  if(item.chainStart) row.classList.add("chain-start");
 
   var lab = el("div","gcell-label");
+  if(item.guide && item.guide.length){
+    var guide = el("span","treeguide");
+    item.guide.forEach(function(cls){ guide.appendChild(el("i", cls)); });
+    lab.appendChild(guide);
+  }
   lab.tabIndex = 0;
   lab.setAttribute("role","button");
   lab.setAttribute("aria-label","Open "+e.title);
@@ -2889,6 +3051,11 @@ function seqRow(e, sched){
     title.appendChild(flag);
   }
   title.appendChild(el("span",null,e.title));
+  if(item.chainSize > 1 && !item.depth){
+    var cs = el("span","chaintag", item.chainSize + " linked");
+    cs.title = "This chain has " + item.chainSize + " initiatives in it";
+    title.appendChild(cs);
+  }
   if(r.moved){
     var shift = el("span","seqshift "+(r.moved > 0 ? "later" : "earlier"),
                    (r.moved > 0 ? "+" : "−") + Math.abs(r.moved) + "q");
@@ -2910,6 +3077,22 @@ function seqRow(e, sched){
   if(e.ownerId) bits.push(nameOf(state.owners, e.ownerId));
   bits.push(e.milestone ? periodOfCol(r.s) : periodOfCol(r.s) + " – " + periodOfCol(r.e));
   meta.appendChild(el("span",null, " " + bits.filter(Boolean).join(" · ")));
+
+  /* Indentation shows the one it follows; say the rest out loud rather than
+     leaving a second predecessor to be traced. */
+  if(layout && layout.waitsOn[e.id] && layout.waitsOn[e.id].length){
+    var others = layout.waitsOn[e.id].filter(function(pid){ return pid !== item.parent; });
+    if(others.length){
+      var names = others.map(function(pid){
+        var p = byId(state.entries, pid); return p ? p.title : "";
+      }).filter(Boolean);
+      var also = el("span","seqalso",
+        (item.parent ? "also after " : "after ") +
+        (names.length > 2 ? names[0] + " + " + (names.length-1) + " more" : names.join(" and ")));
+      also.title = (item.parent ? "Also waits on: " : "Waits on: ") + names.join(", ");
+      meta.appendChild(also);
+    }
+  }
   text.appendChild(meta);
   lab.appendChild(text);
   row.appendChild(lab);
@@ -2956,10 +3139,20 @@ function renderSequence(){
   applyMetrics();
 
   var sched = sequencedSchedule();
-  renderSeqKpis(sched);
+  var layout = seqLayout(sched);
+  renderSeqKpis(sched, layout);
 
   host.appendChild(ganttHeader());
-  var rows = seqEntries(sched);
+  var rows = seqEntries(sched, layout);
+  /* Mark where each chain begins and how big it is, for the rule and the tag. */
+  var sizes = {};
+  rows.forEach(function(it){ if(it.chain != null) sizes[it.chain] = (sizes[it.chain]||0) + 1; });
+  var lastChain = null;
+  rows.forEach(function(it){
+    it.chainSize = (it.chain != null) ? sizes[it.chain] : 1;
+    it.chainStart = (it.chain !== lastChain);
+    lastChain = it.chain;
+  });
   if(!rows.length){
     host.appendChild(el("div","seqempty",
       state.entries.length ? "Nothing matches that." : "The roadmap is empty."));
@@ -2967,7 +3160,7 @@ function renderSequence(){
     return;
   }
   var body = el("div","gbody");
-  rows.forEach(function(e){ body.appendChild(seqRow(e, sched)); });
+  rows.forEach(function(item){ body.appendChild(seqRow(item, sched, layout)); });
   var marker = todayMarker();
   if(marker) body.appendChild(marker);
   host.appendChild(body);
@@ -2975,7 +3168,7 @@ function renderSequence(){
   renderSeqLegend();
 }
 
-function renderSeqKpis(sched){
+function renderSeqKpis(sched, layout){
   var host = $("#seq-kpis");
   host.innerHTML = "";
   var all = state.entries;
@@ -2993,9 +3186,11 @@ function renderSeqKpis(sched){
   var chained = all.filter(function(e){
     return (e.deps||[]).some(function(d){ return d.ref; });
   }).length;
+  var linked = layout ? layout.chains.filter(function(c){ return c.length > 1; }).length : 0;
 
   [
     {n:all.length, k:"Initiatives", s:"All of them, in one list"},
+    {n:linked,     k:"Chains", s:"Groups of linked initiatives"},
     {n:chained,    k:"Waiting on something", s:"Start driven by a dependency"},
     {n:later,      k:"Start later", s:"Than the date they were given", accent:later>0},
     {n:earlier,    k:"Could start earlier", s:"Dependencies clear before the plan"},
@@ -3048,7 +3243,8 @@ function renderSeqLegend(){
   host.appendChild(g2);
 
   var g3 = el("div","grp");
-  g3.appendChild(el("strong",null,"Links"));
+  g3.appendChild(el("strong",null,"Chains"));
+  g3.appendChild(el("span","item","Each row sits under the initiative it waits on"));
   var l1 = el("span","item");
   l1.appendChild(depSwatch(false));
   l1.appendChild(el("span",null,"Waits on"));
@@ -4635,6 +4831,16 @@ function wire(){
     keys.forEach(function(k){ ui.expanded[k] = true; });
     renderExec();
   });
+  $$('#view-sequence .segmented button').forEach(function(b){
+    b.addEventListener("click", function(){
+      ui.seqArrange = b.dataset.arrange;
+      $$('#view-sequence .segmented button').forEach(function(x){
+        x.setAttribute("aria-pressed", x === b ? "true" : "false");
+      });
+      saveView();
+      renderSequence();
+    });
+  });
   $("#q-search").addEventListener("input", function(){ ui.seqSearch = this.value; renderSequence(); });
   $("#q-ghost").addEventListener("change", function(){ ui.seqGhost = this.checked; renderSequence(); });
   $("#q-moved").addEventListener("change", function(){ ui.seqMovedOnly = this.checked; renderSequence(); });
@@ -4821,6 +5027,9 @@ wire();
 setFiltersOpen(ui.filtersOpen);
 setHeaderOpen(ui.headerOpen);
 setShowDeps(ui.showDeps);
+$$('#view-sequence .segmented button').forEach(function(b){
+  b.setAttribute("aria-pressed", b.dataset.arrange === ui.seqArrange ? "true" : "false");
+});
 renderAll();
 setView(String(location.hash).replace("#","") || "detail", true);
 save();
