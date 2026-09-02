@@ -953,7 +953,7 @@ form:not(.is-view) .view-only{display:none}
         </button>
         <label class="checkline"><input type="checkbox" id="f-exec" /> Spotlight</label>
         <div class="toolbar-spacer"></div>
-        <div class="segmented" role="group" aria-label="Minimum column width">
+        <div class="segmented" role="group" aria-label="Minimum column width" id="detail-zoom">
           <button data-zoom="46" type="button" title="Narrow columns">S</button>
           <button data-zoom="72" type="button" aria-pressed="true" title="Medium columns">M</button>
           <button data-zoom="104" type="button" title="Wide columns">L</button>
@@ -1055,14 +1055,59 @@ form:not(.is-view) .view-only{display:none}
           <input class="control search" id="q-search" type="search"
                  placeholder="Search initiatives&hellip;" aria-label="Search initiatives" />
         </div>
-        <div class="segmented" role="group" aria-label="Arrangement">
+        <button class="btn btn-quiet" type="button" id="btn-seq-filters"
+                aria-expanded="false" aria-controls="seq-toolbar-more">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+          Filters
+          <span class="badge" id="seq-more-count" hidden>0</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <label class="checkline"><input type="checkbox" id="q-exec" /> Spotlight</label>
+        <div class="segmented" role="group" aria-label="Arrangement" id="seq-arrange">
           <button data-arrange="chain" type="button" aria-pressed="true" title="Group linked initiatives into chains">Chains</button>
           <button data-arrange="start" type="button" title="One flat list ordered by start date">By date</button>
         </div>
         <label class="checkline"><input type="checkbox" id="q-ghost" checked /> Show planned position</label>
         <label class="checkline"><input type="checkbox" id="q-moved" /> Only what moved</label>
         <div class="toolbar-spacer"></div>
+        <div class="segmented" role="group" aria-label="Minimum column width" id="seq-zoom">
+          <button data-zoom="46" type="button" title="Narrow columns">S</button>
+          <button data-zoom="72" type="button" aria-pressed="true" title="Medium columns">M</button>
+          <button data-zoom="104" type="button" title="Wide columns">L</button>
+        </div>
         <button class="btn btn-quiet" id="q-print" type="button">Print / PDF</button>
+      </div>
+      <div class="toolbar toolbar-secondary" id="seq-toolbar-more" hidden>
+        <div class="field">
+          <label for="q-lane">Lane</label>
+          <select class="control" id="q-lane"></select>
+        </div>
+        <div class="field">
+          <label for="q-sublane">Sub-category</label>
+          <select class="control" id="q-sublane"></select>
+        </div>
+        <div class="field">
+          <label for="q-status">Status</label>
+          <select class="control" id="q-status"></select>
+        </div>
+        <div class="field">
+          <label for="q-priority">Priority</label>
+          <select class="control" id="q-priority"></select>
+        </div>
+        <div class="field">
+          <label for="q-owner">Owner</label>
+          <select class="control" id="q-owner"></select>
+        </div>
+        <div class="field">
+          <label for="q-theme">Theme</label>
+          <select class="control" id="q-theme"></select>
+        </div>
+        <div class="field">
+          <label for="q-platform">System</label>
+          <select class="control" id="q-platform"></select>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-quiet" type="button" id="btn-seq-clear-filters">Reset filters</button>
       </div>
       <div class="scroller" id="seq-scroller">
         <div class="gantt" id="seq-gantt"></div>
@@ -1484,6 +1529,8 @@ var ui = {
   expanded:{},
   adminPanel:"lanes",
   seqSearch:"",
+  seqFilters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
+  seqFiltersOpen:false,
   seqGhost:true,
   seqArrange:"chain",
   seqMovedOnly:false,
@@ -1492,7 +1539,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps, seqArrange:ui.seqArrange})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps, seqArrange:ui.seqArrange, seqFiltersOpen:ui.seqFiltersOpen})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1503,6 +1550,7 @@ function loadView(){
     if([46,72,104].indexOf(Number(v.zoom)) >= 0) ui.zoom = Number(v.zoom);
     if(v.collapsed && typeof v.collapsed === "object") ui.collapsed = v.collapsed;
     ui.filtersOpen = !!v.filtersOpen;
+    ui.seqFiltersOpen = !!v.seqFiltersOpen;
     if(typeof v.headerOpen === "boolean") ui.headerOpen = v.headerOpen;
     if(typeof v.showDeps === "boolean") ui.showDeps = v.showDeps;
     if(v.seqArrange === "chain" || v.seqArrange === "start") ui.seqArrange = v.seqArrange;
@@ -2100,8 +2148,26 @@ function emptyBlock(title, msg, actionLabel, action){
 /* ============================================================
    6. Detailed gantt view
    ============================================================ */
-function matchesFilters(e){
-  var f = ui.filters;
+/* Everything a search term is allowed to match on. */
+function searchHaystack(e){
+  return [
+    e.title, e.notes,
+    nameOf(state.owners,e.ownerId), nameOf(state.platforms,e.platformId),
+    nameOf(state.themes,e.themeId), nameOf(state.lanes,e.laneId),
+    nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId),
+    nameOf(state.priorities,e.priorityId),
+    (e.deps||[]).map(function(d){
+      if(d.text) return d.text;
+      var t = byId(state.entries, d.ref);
+      return t ? t.title : "";
+    }).join(" ")
+  ].join(" ").toLowerCase();
+}
+
+/* The detailed gantt and the sequenced plan each keep their own copy of the
+   same seven filters plus a search box, so the predicate takes the set it is
+   judging against rather than reaching for one of them. */
+function matchesFilterSet(e, f, term){
   if(f.lane && e.laneId!==f.lane) return false;
   if(f.subLane && e.subLaneId!==f.subLane) return false;
   if(f.status && e.statusId!==f.status) return false;
@@ -2110,23 +2176,12 @@ function matchesFilters(e){
   if(f.theme && e.themeId!==f.theme) return false;
   if(f.platform && e.platformId!==f.platform) return false;
   if(f.execOnly && !e.spotlight) return false;
-  if(ui.search){
-    var hay = [
-      e.title, e.notes,
-      nameOf(state.owners,e.ownerId), nameOf(state.platforms,e.platformId),
-      nameOf(state.themes,e.themeId), nameOf(state.lanes,e.laneId),
-      nameOf(state.subLanes,e.subLaneId), nameOf(state.statuses,e.statusId),
-      nameOf(state.priorities,e.priorityId),
-      (e.deps||[]).map(function(d){
-        if(d.text) return d.text;
-        var t = byId(state.entries, d.ref);
-        return t ? t.title : "";
-      }).join(" ")
-    ].join(" ").toLowerCase();
-    if(hay.indexOf(ui.search.toLowerCase())<0) return false;
-  }
+  var t = (term||"").trim().toLowerCase();
+  if(t && searchHaystack(e).indexOf(t) < 0) return false;
   return true;
 }
+
+function matchesFilters(e){ return matchesFilterSet(e, ui.filters, ui.search); }
 
 /* Hand-set position first; date order only breaks ties. */
 function sortEntries(a,b){
@@ -2975,15 +3030,11 @@ function seqLayout(sched){
 }
 
 function seqEntries(sched, layout){
-  var term = ui.seqSearch.trim().toLowerCase();
   function keep(e){
     var r = sched[e.id];
     if(!r) return false;
     if(ui.seqMovedOnly && !r.moved) return false;
-    if(!term) return true;
-    return [e.title, e.notes, nameOf(state.lanes,e.laneId), nameOf(state.subLanes,e.subLaneId),
-            nameOf(state.owners,e.ownerId), nameOf(state.statuses,e.statusId)]
-             .join(" ").toLowerCase().indexOf(term) >= 0;
+    return matchesFilterSet(e, ui.seqFilters, ui.seqSearch);
   }
 
   if(ui.seqArrange === "start"){
@@ -3154,9 +3205,6 @@ function renderSequence(){
 
   var sched = sequencedSchedule();
   var layout = seqLayout(sched);
-  renderSeqKpis(sched, layout);
-
-  host.appendChild(ganttHeader());
   var rows = seqEntries(sched, layout);
   /* Mark where each chain begins and how big it is, for the rule and the tag. */
   var sizes = {};
@@ -3167,6 +3215,10 @@ function renderSequence(){
     it.chainStart = (it.chain !== lastChain);
     lastChain = it.chain;
   });
+  /* The summary counts what is on screen, so it never contradicts the list. */
+  renderSeqKpis(sched, layout, rows);
+
+  host.appendChild(ganttHeader());
   if(!rows.length){
     host.appendChild(el("div","seqempty",
       state.entries.length ? "Nothing matches that." : "The roadmap is empty."));
@@ -3182,28 +3234,40 @@ function renderSequence(){
   renderSeqLegend();
 }
 
-function renderSeqKpis(sched, layout){
+/* Is the sequenced plan showing less than the whole roadmap? */
+function seqIsNarrowed(){
+  var f = ui.seqFilters;
+  return !!(f.lane || f.subLane || f.status || f.priority || f.owner || f.theme ||
+            f.platform || f.execOnly || ui.seqMovedOnly || (ui.seqSearch||"").trim());
+}
+
+function renderSeqKpis(sched, layout, rows){
   var host = $("#seq-kpis");
   host.innerHTML = "";
-  var all = state.entries;
-  var later = 0, earlier = 0, beyond = 0, latest = -Infinity, cyclic = 0;
+  var narrowed = seqIsNarrowed();
+  var later = 0, earlier = 0, beyond = 0, cyclic = 0;
   var cols = colCount();
-  all.forEach(function(e){
-    var r = sched[e.id];
+  var shown = {};
+  rows.forEach(function(it){
+    var r = sched[it.entry.id];
+    shown[it.entry.id] = 1;
     if(!r) return;
     if(r.moved > 0) later++;
     if(r.moved < 0) earlier++;
     if(r.e > cols - 1) beyond++;
     if(r.cyclic) cyclic++;
-    if(r.e > latest) latest = r.e;
   });
-  var chained = all.filter(function(e){
-    return (e.deps||[]).some(function(d){ return d.ref; });
+  var chained = rows.filter(function(it){
+    return (it.entry.deps||[]).some(function(d){ return d.ref; });
   }).length;
-  var linked = layout ? layout.chains.filter(function(c){ return c.length > 1; }).length : 0;
+  /* A chain counts once two or more of its members are still on screen -
+     true whichever arrangement is showing. */
+  var linked = layout ? layout.chains.filter(function(c){
+    return c.filter(function(id){ return shown[id]; }).length > 1;
+  }).length : 0;
 
   [
-    {n:all.length, k:"Initiatives", s:"All of them, in one list"},
+    {n:rows.length, k:"Initiatives", s:narrowed ? "Matching the filters" : "All of them, in one list"},
     {n:linked,     k:"Chains", s:"Groups of linked initiatives"},
     {n:chained,    k:"Waiting on something", s:"Start driven by a dependency"},
     {n:later,      k:"Start later", s:"Than the date they were given", accent:later>0},
@@ -4672,27 +4736,33 @@ function commit(msg, opts){
   if(msg) toast(msg, opts);
 }
 
-function refreshFilterSelects(){
-  fillSelect($("#f-lane"),     state.lanes,     {placeholder:"All lanes",   selected:ui.filters.lane});
+/* One filter row, filled from whichever set of choices owns it. */
+function fillFilterRow(pre, f){
+  fillSelect($("#"+pre+"-lane"),     state.lanes,     {placeholder:"All lanes",   selected:f.lane});
   /* Sub-categories narrow to the chosen lane, otherwise every lane's are offered. */
-  var subs = ui.filters.lane
-    ? state.subLanes.filter(function(x){ return x.laneId===ui.filters.lane; })
+  var subs = f.lane
+    ? state.subLanes.filter(function(x){ return x.laneId===f.lane; })
     : state.subLanes;
-  fillSelect($("#f-sublane"),  subs,            {placeholder:"All sub-categories", selected:ui.filters.subLane});
-  fillSelect($("#f-status"),   state.statuses,  {placeholder:"All statuses",selected:ui.filters.status});
-  fillSelect($("#f-priority"), state.priorities,{placeholder:"All priorities", selected:ui.filters.priority});
-  fillSelect($("#f-owner"),    state.owners,    {placeholder:"All owners",  selected:ui.filters.owner});
-  fillSelect($("#f-theme"),    state.themes,    {placeholder:"All themes",  selected:ui.filters.theme});
-  fillSelect($("#f-platform"), state.platforms, {placeholder:"All systems", selected:ui.filters.platform});
-  fillSelect($("#fx-lane"),    state.lanes,     {placeholder:"All lanes",   selected:ui.execFilters.lane});
+  fillSelect($("#"+pre+"-sublane"),  subs,            {placeholder:"All sub-categories", selected:f.subLane});
+  fillSelect($("#"+pre+"-status"),   state.statuses,  {placeholder:"All statuses",selected:f.status});
+  fillSelect($("#"+pre+"-priority"), state.priorities,{placeholder:"All priorities", selected:f.priority});
+  fillSelect($("#"+pre+"-owner"),    state.owners,    {placeholder:"All owners",  selected:f.owner});
+  fillSelect($("#"+pre+"-theme"),    state.themes,    {placeholder:"All themes",  selected:f.theme});
+  fillSelect($("#"+pre+"-platform"), state.platforms, {placeholder:"All systems", selected:f.platform});
   /* fillSelect blanks a value that no longer exists — mirror that back. */
-  ui.filters.lane     = $("#f-lane").value;
-  ui.filters.subLane  = $("#f-sublane").value;
-  ui.filters.status   = $("#f-status").value;
-  ui.filters.priority = $("#f-priority").value;
-  ui.filters.owner    = $("#f-owner").value;
-  ui.filters.theme    = $("#f-theme").value;
-  ui.filters.platform = $("#f-platform").value;
+  f.lane     = $("#"+pre+"-lane").value;
+  f.subLane  = $("#"+pre+"-sublane").value;
+  f.status   = $("#"+pre+"-status").value;
+  f.priority = $("#"+pre+"-priority").value;
+  f.owner    = $("#"+pre+"-owner").value;
+  f.theme    = $("#"+pre+"-theme").value;
+  f.platform = $("#"+pre+"-platform").value;
+}
+
+function refreshFilterSelects(){
+  fillFilterRow("f", ui.filters);
+  fillFilterRow("q", ui.seqFilters);
+  fillSelect($("#fx-lane"),    state.lanes,     {placeholder:"All lanes",   selected:ui.execFilters.lane});
   ui.execFilters.lane = $("#fx-lane").value;
 }
 
@@ -4700,13 +4770,16 @@ function refreshFilterSelects(){
    is still being narrowed. It never forces the panel open - that is the
    reader's choice, and Reset filters sits inside it. */
 function refreshFilterBadge(){
-  var f = ui.filters;
+  badgeFilters("#more-count", "#btn-more-filters", ui.filters);
+  badgeFilters("#seq-more-count", "#btn-seq-filters", ui.seqFilters);
+}
+function badgeFilters(badgeSel, btnSel, f){
   var n = [f.lane, f.subLane, f.status, f.priority, f.owner, f.theme, f.platform]
             .filter(Boolean).length;
-  var badge = $("#more-count");
+  var badge = $(badgeSel);
   badge.textContent = String(n);
   badge.hidden = n === 0;
-  $("#btn-more-filters").classList.toggle("has-filters", n > 0);
+  $(btnSel).classList.toggle("has-filters", n > 0);
 }
 
 /* Folding the header hands its height to the timeline. The view tabs stay
@@ -4741,6 +4814,30 @@ function setFiltersOpen(open){
   $("#toolbar-more").hidden = !ui.filtersOpen;
   saveView();
   refreshFilterBadge();
+  applyMetrics();
+}
+
+function setSeqFiltersOpen(open){
+  ui.seqFiltersOpen = !!open;
+  $("#btn-seq-filters").setAttribute("aria-expanded", ui.seqFiltersOpen ? "true" : "false");
+  $("#seq-toolbar-more").hidden = !ui.seqFiltersOpen;
+  saveView();
+  refreshFilterBadge();
+  applyMetrics();
+}
+
+/* Zoom is a floor on the quarter width and is shared by every timeline, so
+   both segmented controls have to agree on which step is pressed. */
+function setZoom(z){
+  ui.zoom = Number(z);
+  syncZoomButtons();
+  saveView();
+  renderDetail(); renderExec(); renderSequence();
+}
+function syncZoomButtons(){
+  $$("[data-zoom]").forEach(function(b){
+    b.setAttribute("aria-pressed", Number(b.dataset.zoom) === ui.zoom ? "true" : "false");
+  });
 }
 
 function renderAll(){
@@ -4758,6 +4855,14 @@ function resetFilters(){
   ui.filters = {lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false};
   $("#f-search").value = "";
   $("#f-exec").checked = false;
+  renderAll();
+}
+
+function resetSeqFilters(){
+  ui.seqSearch = "";
+  ui.seqFilters = {lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false};
+  $("#q-search").value = "";
+  $("#q-exec").checked = false;
   renderAll();
 }
 
@@ -4819,15 +4924,8 @@ function wire(){
   });
   $("#btn-add").addEventListener("click", function(){ openEntryDialog(null); });
 
-  $$("#view-detail .segmented button").forEach(function(b){
-    b.addEventListener("click", function(){
-      ui.zoom = Number(b.dataset.zoom);
-      $$("#view-detail .segmented button").forEach(function(x){
-        x.setAttribute("aria-pressed", x===b ? "true":"false");
-      });
-      saveView();
-      renderDetail(); renderExec();
-    });
+  $$("[data-zoom]").forEach(function(b){
+    b.addEventListener("click", function(){ setZoom(b.dataset.zoom); });
   });
 
   $$("#view-exec .segmented button").forEach(function(b){
@@ -4848,10 +4946,10 @@ function wire(){
     keys.forEach(function(k){ ui.expanded[k] = true; });
     renderExec();
   });
-  $$('#view-sequence .segmented button').forEach(function(b){
+  $$('#seq-arrange button').forEach(function(b){
     b.addEventListener("click", function(){
       ui.seqArrange = b.dataset.arrange;
-      $$('#view-sequence .segmented button').forEach(function(x){
+      $$('#seq-arrange button').forEach(function(x){
         x.setAttribute("aria-pressed", x === b ? "true" : "false");
       });
       saveView();
@@ -4859,6 +4957,26 @@ function wire(){
     });
   });
   $("#q-search").addEventListener("input", function(){ ui.seqSearch = this.value; renderSequence(); });
+  $("#q-lane").addEventListener("change", function(){
+    ui.seqFilters.lane = this.value;
+    /* A sub-category from another lane can no longer match; drop it. */
+    var keep = byId(state.subLanes, ui.seqFilters.subLane);
+    if(keep && ui.seqFilters.lane && keep.laneId !== ui.seqFilters.lane) ui.seqFilters.subLane = "";
+    refreshFilterSelects();
+    refreshFilterBadge();
+    renderSequence();
+  });
+  $("#q-sublane").addEventListener("change", function(){ ui.seqFilters.subLane = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-status").addEventListener("change", function(){ ui.seqFilters.status = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-priority").addEventListener("change", function(){ ui.seqFilters.priority = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-owner").addEventListener("change", function(){ ui.seqFilters.owner = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-theme").addEventListener("change", function(){ ui.seqFilters.theme = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-platform").addEventListener("change", function(){ ui.seqFilters.platform = this.value; refreshFilterBadge(); renderSequence(); });
+  $("#q-exec").addEventListener("change", function(){ ui.seqFilters.execOnly = this.checked; renderSequence(); });
+  $("#btn-seq-filters").addEventListener("click", function(){
+    setSeqFiltersOpen(this.getAttribute("aria-expanded") !== "true");
+  });
+  $("#btn-seq-clear-filters").addEventListener("click", resetSeqFilters);
   $("#q-ghost").addEventListener("change", function(){ ui.seqGhost = this.checked; renderSequence(); });
   $("#q-moved").addEventListener("change", function(){ ui.seqMovedOnly = this.checked; renderSequence(); });
   $("#q-print").addEventListener("click", function(){
@@ -5048,9 +5166,11 @@ baseline = cloneState();
 loadView();
 wire();
 setFiltersOpen(ui.filtersOpen);
+setSeqFiltersOpen(ui.seqFiltersOpen);
 setHeaderOpen(ui.headerOpen);
 setShowDeps(ui.showDeps);
-$$('#view-sequence .segmented button').forEach(function(b){
+syncZoomButtons();
+$$('#seq-arrange button').forEach(function(b){
   b.setAttribute("aria-pressed", b.dataset.arrange === ui.seqArrange ? "true" : "false");
 });
 renderAll();
