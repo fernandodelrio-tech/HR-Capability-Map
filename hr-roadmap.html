@@ -958,10 +958,6 @@ form:not(.is-view) .view-only{display:none}
           <button data-zoom="72" type="button" aria-pressed="true" title="Medium columns">M</button>
           <button data-zoom="104" type="button" title="Wide columns">L</button>
         </div>
-        <button class="btn btn-quiet btn-icon" id="btn-deps" type="button"
-                aria-pressed="true" aria-label="Hide dependency links" title="Hide dependency links">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 007.1 0l3-3a5 5 0 00-7.1-7.1l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.1 0l-3 3a5 5 0 007.1 7.1l1.7-1.7"/></svg>
-        </button>
         <button class="btn btn-quiet btn-icon" id="btn-collapse-lanes" type="button"
                 aria-label="Collapse all lanes" title="Collapse every lane">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l8-5 8 5"/><path d="M4 15l8 5 8-5"/></svg>
@@ -1522,7 +1518,6 @@ var ui = {
   collapsed:{},
   filtersOpen:false,
   headerOpen:true,
-  showDeps:true,
   filters:{lane:"",subLane:"",status:"",priority:"",owner:"",theme:"",platform:"",execOnly:false},
   execFilters:{lane:"",execOnly:false},
   rollup:"theme",
@@ -1539,7 +1534,7 @@ var ui = {
 };
 
 function saveView(){
-  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, showDeps:ui.showDeps, seqArrange:ui.seqArrange, seqFiltersOpen:ui.seqFiltersOpen})); }
+  try{ localStorage.setItem(VIEW_KEY, JSON.stringify({labelW:ui.labelW, zoom:ui.zoom, collapsed:ui.collapsed, filtersOpen:ui.filtersOpen, headerOpen:ui.headerOpen, seqArrange:ui.seqArrange, seqFiltersOpen:ui.seqFiltersOpen})); }
   catch(err){ /* view preferences are a nicety; never block on them */ }
 }
 function loadView(){
@@ -1552,7 +1547,6 @@ function loadView(){
     ui.filtersOpen = !!v.filtersOpen;
     ui.seqFiltersOpen = !!v.seqFiltersOpen;
     if(typeof v.headerOpen === "boolean") ui.headerOpen = v.headerOpen;
-    if(typeof v.showDeps === "boolean") ui.showDeps = v.showDeps;
     if(v.seqArrange === "chain" || v.seqArrange === "start") ui.seqArrange = v.seqArrange;
   }catch(err){ /* ignore a corrupt preference blob */ }
 }
@@ -2222,8 +2216,6 @@ function entryRow(e, childOf){
   row.setAttribute("data-id", e.id);
   row.style.setProperty("--lane", color);
   if(!childOf){
-    row.addEventListener("mouseenter", function(){ focusDeps(e.id); });
-    row.addEventListener("mouseleave", function(){ focusDeps(null); });
   }
 
   var lab = el("div","gcell-label");
@@ -2398,6 +2390,16 @@ function renderDetail(){
   renderLegend($("#detail-legend"));
 }
 
+/* The chain icon carries the dependency count on a row of the detailed
+   gantt; the legend shows the chip itself rather than describing it. */
+function depFlagSwatch(tight){
+  var f = el("span","deplink-flag"+(tight?" tight":""));
+  f.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">'+
+    '<path d="M10 13a5 5 0 007.1 0l3-3a5 5 0 00-7.1-7.1l-1.7 1.7"/>'+
+    '<path d="M14 11a5 5 0 00-7.1 0l-3 3a5 5 0 007.1 7.1l1.7-1.7"/></svg><span>2</span>';
+  return f;
+}
+
 /* A miniature of the link line, so the legend matches what is drawn. */
 function depSwatch(tight){
   var svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
@@ -2472,13 +2474,14 @@ function renderLegend(host){
     var g6 = el("div","grp");
     g6.appendChild(el("strong",null,"Links"));
     var l1 = el("span","item");
-    l1.appendChild(depSwatch(false));
-    l1.appendChild(el("span",null,"Waits on"));
+    l1.appendChild(depFlagSwatch(false));
+    l1.appendChild(el("span",null,"Waits on that many initiatives"));
     g6.appendChild(l1);
     var l2 = el("span","item");
-    l2.appendChild(depSwatch(true));
-    l2.appendChild(el("span",null,"Starts before that one finishes"));
+    l2.appendChild(depFlagSwatch(true));
+    l2.appendChild(el("span",null,"Starts before one of them finishes"));
     g6.appendChild(l2);
+    g6.appendChild(el("span","item","Open the Sequenced Plan to see them laid out in order"));
     host.appendChild(g6);
   }
 }
@@ -2515,8 +2518,12 @@ function rowVisible(id, host){
   return !!row && !row.hidden;
 }
 
+/* Dependency lines are drawn on the sequenced plan only. There the rows are
+   arranged so a line runs a short hop down to the row beneath it; on the
+   detailed gantt, where rows sit in lane order, the same links crossed the
+   whole page. That view keeps the count chip on the row instead, and the
+   detail sheet draws the flow. */
 function drawDepLinks(){
-  drawLinksIn("#detail-gantt", depIsTight);
   drawLinksIn("#seq-gantt", function(){ return false; });   /* nothing is tight once sequenced */
 }
 
@@ -2524,11 +2531,6 @@ function drawLinksIn(host, tightFn){
   var body = $(host+" .gbody");
   if(!body) return;
   var svg = body.querySelector("svg.deplinks");
-
-  if(!ui.showDeps){
-    if(svg) svg.remove();
-    return;
-  }
   if(!svg){
     svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
     svg.setAttribute("class","deplinks");
@@ -2592,7 +2594,7 @@ function linkPath(pBar, sBar, box, pred, succ, tight){
 
 /* Hovering a row lifts its own links out of the rest. */
 function focusDeps(id, host){
-  var svg = document.querySelector((host || "#detail-gantt")+" svg.deplinks");
+  var svg = document.querySelector(host+" svg.deplinks");
   if(!svg) return;
   svg.classList.toggle("has-focus", !!id);
   Array.prototype.slice.call(svg.querySelectorAll(".deplink")).forEach(function(g){
@@ -4797,17 +4799,6 @@ function setHeaderOpen(open){
   applyMetrics();
 }
 
-function setShowDeps(on){
-  ui.showDeps = !!on;
-  var b = $("#btn-deps");
-  b.setAttribute("aria-pressed", ui.showDeps ? "true" : "false");
-  b.setAttribute("aria-label", ui.showDeps ? "Hide dependency links" : "Show dependency links");
-  b.title = ui.showDeps ? "Hide dependency links" : "Show dependency links";
-  b.classList.toggle("btn-quiet", true);
-  saveView();
-  scheduleDepDraw();
-}
-
 function setFiltersOpen(open){
   ui.filtersOpen = !!open;
   $("#btn-more-filters").setAttribute("aria-expanded", ui.filtersOpen ? "true" : "false");
@@ -4915,7 +4906,6 @@ function wire(){
   $("#btn-header").addEventListener("click", function(){
     setHeaderOpen(this.getAttribute("aria-expanded") !== "true");
   });
-  $("#btn-deps").addEventListener("click", function(){ setShowDeps(!ui.showDeps); });
   $("#btn-clear-filters").addEventListener("click", resetFilters);
   $("#btn-collapse-lanes").addEventListener("click", toggleAllLanes);
   $("#toast-undo").addEventListener("click", function(){
@@ -5168,7 +5158,6 @@ wire();
 setFiltersOpen(ui.filtersOpen);
 setSeqFiltersOpen(ui.seqFiltersOpen);
 setHeaderOpen(ui.headerOpen);
-setShowDeps(ui.showDeps);
 syncZoomButtons();
 $$('#seq-arrange button').forEach(function(b){
   b.setAttribute("aria-pressed", b.dataset.arrange === ui.seqArrange ? "true" : "false");
