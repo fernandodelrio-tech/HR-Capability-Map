@@ -772,6 +772,8 @@ table.tbl th{
 table.tbl td{padding:11px 14px;border-bottom:1px solid var(--outline-soft);vertical-align:middle}
 table.tbl tbody tr:last-child td{border-bottom:0}
 table.tbl tr:hover td{background:var(--surface-warm)}
+table.tbl tbody tr.rowlink{cursor:pointer}
+table.tbl tbody tr.rowlink:hover td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 table.tbl td.actions{text-align:right;white-space:nowrap}
 table.tbl td.actions .btn{margin-left:6px}
 .swatch{display:inline-flex;align-items:center;gap:9px}
@@ -855,6 +857,12 @@ form.is-view .field:hover > label{color:var(--red)}
 form.is-view .field > label{transition:color .12s ease}
 form.is-view .checkline{cursor:pointer;border-radius:var(--r-pill);padding:3px 10px;margin:-3px -10px}
 form.is-view input[type=checkbox],form.is-view input[type=range]{pointer-events:none}
+/* The colour well reads as a swatch beside its hex, not as a picker. */
+form.is-view input[type=color]{
+  pointer-events:none;width:26px;height:26px;padding:0;border:1px solid var(--outline);
+  border-radius:var(--r-xs);
+}
+form.is-view .swatches{display:none}
 form.is-view .rangeline input[type=range]{opacity:.75}
 form.is-view #e-delete{display:none}
 form.is-view .period{grid-template-columns:auto auto;justify-content:start;gap:4px}
@@ -1260,7 +1268,11 @@ form:not(.is-view) .view-only{display:none}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <div class="dlg-body">
+    <div class="dlg-body" id="v-body">
+      <p class="viewhint">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+        Click any field to start editing.
+      </p>
       <div class="formgrid">
         <div class="field full">
           <label for="v-name">Name<span class="req"> *</span></label>
@@ -1298,9 +1310,13 @@ form:not(.is-view) .view-only{display:none}
       </div>
     </div>
     <div class="dlg-foot">
+      <button class="btn btn-danger edit-only" type="button" id="v-delete">Remove</button>
+      <button class="btn btn-quiet view-only" type="button" id="v-remove-view">Remove</button>
       <span class="spacer"></span>
-      <button class="btn btn-quiet" type="button" data-close>Cancel</button>
-      <button class="btn btn-primary" type="button" id="v-save">Save</button>
+      <button class="btn btn-quiet view-only" type="button" data-close>Close</button>
+      <button class="btn btn-primary view-only" type="button" id="v-edit">Edit</button>
+      <button class="btn btn-quiet edit-only" type="button" id="v-cancel">Cancel</button>
+      <button class="btn btn-primary edit-only" type="button" id="v-save">Save</button>
     </div>
   </form>
 </dialog>
@@ -3644,7 +3660,14 @@ function renderCollectionPanel(host, cfg){
 
   var tbody = el("tbody");
   list.forEach(function(item, idx){
-    var row = el("tr");
+    var row = el("tr","rowlink");
+    row.title = "Open " + item.name;
+    /* Anything with its own handler - the buttons, the inline checkboxes -
+       keeps it; the rest of the row opens the sheet. */
+    row.addEventListener("click", function(ev){
+      if(ev.target.closest(".actions, .checkline")) return;
+      openValueDialog(cfg, item.id);
+    });
 
     row.appendChild(el("td",null,item.name));
 
@@ -3714,7 +3737,7 @@ function renderCollectionPanel(host, cfg){
       tdA.appendChild(moveBtn(cfg, idx, -1, list.length));
       tdA.appendChild(moveBtn(cfg, idx, +1, list.length));
     }
-    var edit = el("button","btn btn-sm btn-quiet","Edit");
+    var edit = el("button","btn btn-sm btn-quiet","Open");
     edit.type = "button";
     edit.addEventListener("click", function(){ openValueDialog(cfg, item.id); });
     tdA.appendChild(edit);
@@ -3748,6 +3771,8 @@ function moveBtn(cfg, idx, dir, len){
 }
 
 function removeValue(cfg, item){
+  if(!item) return;
+  if($("#dlg-value").open) $("#dlg-value").close();
   var n = usageCount(cfg.field, item.id);
   var extra = "";
   if(cfg.key==="lanes"){
@@ -3898,7 +3923,12 @@ function renderEntriesPanel(host){
     thead.appendChild(tr); tbl.appendChild(thead);
     var tbody = el("tbody");
     rows.forEach(function(e){
-      var r = el("tr");
+      var r = el("tr","rowlink");
+      r.title = "Open " + e.title;
+      r.addEventListener("click", function(ev){
+        if(ev.target.closest(".actions")) return;
+        openEntryDialog(e.id);
+      });
       var tdT = el("td");
       tdT.appendChild(el("span",null,(e.spotlight?"★ ":"")+e.title));
       r.appendChild(tdT);
@@ -4619,11 +4649,88 @@ function deleteEntry(id){
 /* ---- Generic admin value dialog ---- */
 var editingValue = {cfg:null, id:null};
 
-function openValueDialog(cfg, id){
-  var item = id ? byId(state[cfg.key], id) : null;
-  editingValue = {cfg:cfg, id:id};
+/* The admin sheet works exactly like the initiative sheet: it opens showing
+   what is there, and a click on any field turns that field into an editor. */
+var valueMode = "view";
+var valuePristine = "";
 
-  $("#dlg-value-title").textContent = (item ? "Edit " : "Add ") + cfg.singular;
+function valueSnapshot(){
+  return JSON.stringify([
+    $("#v-name").value.trim(), $("#v-parent").value, $("#v-kind").value,
+    String($("#v-color-hex").value).trim().toUpperCase(), $("#v-desc").value.trim()
+  ]);
+}
+function valueIsDirty(){
+  return valueMode === "edit" && valueSnapshot() !== valuePristine;
+}
+
+function setValueMode(mode){
+  valueMode = (mode === "edit") ? "edit" : "view";
+  var form = $("#form-value");
+  form.classList.toggle("is-view", valueMode === "view");
+  $("#v-err").classList.remove("show");
+
+  var cfg = editingValue.cfg;
+  var item = (editingValue.id && cfg) ? byId(state[cfg.key], editingValue.id) : null;
+  $("#dlg-value-title").textContent =
+    valueMode === "view" ? (item ? item.name : (cfg ? cfg.singular : "Value"))
+                         : (item ? "Edit " : "Add ") + (cfg ? cfg.singular : "value");
+  /* Nothing to remove until it exists. */
+  $("#v-remove-view").style.display = item ? "" : "none";
+  $("#v-delete").style.display = item ? "" : "none";
+
+  if(valueMode === "edit") valuePristine = valueSnapshot();
+}
+
+function cancelValueEdit(){
+  if(editingValue.id){
+    populateValueForm(editingValue.cfg, editingValue.id);
+    setValueMode("view");
+  }else{
+    $("#dlg-value").close();
+  }
+}
+
+function requestCloseValue(){
+  if(!valueIsDirty()){ $("#dlg-value").close(); return; }
+  var cfg = editingValue.cfg;
+  var item = (editingValue.id && cfg) ? byId(state[cfg.key], editingValue.id) : null;
+  ask("Save your changes?",
+      (item ? "\u201C" + item.name + "\u201D has" : "This new " + (cfg ? cfg.singular.toLowerCase() : "value") + " has") +
+      " edits you have not saved yet.",
+      "Save changes",
+      function(){ if(saveValue()) $("#dlg-value").close(); },
+      {
+        okPrimary: true,
+        altLabel: "Discard",
+        onAlt: function(){
+          if(editingValue.id){
+            populateValueForm(editingValue.cfg, editingValue.id);
+            setValueMode("view");
+          }
+          $("#dlg-value").close();
+        }
+      });
+}
+
+function openValueDialog(cfg, id, mode){
+  populateValueForm(cfg, id);
+  setValueMode(mode || (id ? "view" : "edit"));
+  if(!$("#dlg-value").open) $("#dlg-value").showModal();
+  var opened = valueMode;
+  setTimeout(function(){
+    if(valueMode !== opened) return;                 /* something already moved focus */
+    if(valueMode === "edit") $("#v-name").focus();
+    else $("#v-edit").focus();
+  }, 30);
+}
+
+/* Fills every control from the stored value. Both modes read the same
+   controls, so this runs on open and again whenever an edit is cancelled. */
+function populateValueForm(cfg, id){
+  var item = id ? byId(state[cfg.key], id) : null;
+  editingValue = {cfg:cfg, id:item ? item.id : null};
+
   $("#v-err").classList.remove("show");
   $("#v-name").value = item ? item.name : "";
 
@@ -4648,10 +4755,7 @@ function openValueDialog(cfg, id){
   }
 
   $("#v-desc-wrap").style.display = cfg.desc ? "" : "none";
-  if(cfg.desc) $("#v-desc").value = item ? (item.desc||"") : "";
-
-  $("#dlg-value").showModal();
-  setTimeout(function(){ $("#v-name").focus(); }, 30);
+  $("#v-desc").value = (cfg.desc && item) ? (item.desc||"") : "";
 }
 
 function renderSwatches(current){
@@ -4675,23 +4779,26 @@ function renderSwatches(current){
 
 function saveValue(){
   var cfg = editingValue.cfg, errNode = $("#v-err");
-  if(!cfg) return;
+  if(!cfg) return false;
   errNode.classList.remove("show");
 
   var name = $("#v-name").value.trim();
-  if(!name){ errNode.textContent = "Give it a name."; errNode.classList.add("show"); return; }
+  if(!name){
+    errNode.textContent = "Give it a name."; errNode.classList.add("show");
+    $("#v-name").focus(); return false;
+  }
 
   var dup = state[cfg.key].filter(function(x){
     return x.id!==editingValue.id && x.name.toLowerCase()===name.toLowerCase();
   });
-  if(dup.length){ errNode.textContent = "That name is already used."; errNode.classList.add("show"); return; }
+  if(dup.length){ errNode.textContent = "That name is already used."; errNode.classList.add("show"); return false; }
 
   var laneId = null;
   if(cfg.parent){
     laneId = $("#v-parent").value;
     if(!laneId){
       errNode.textContent = "Enable sub-categories on a lane first, then assign this one to it.";
-      errNode.classList.add("show"); return;
+      errNode.classList.add("show"); return false;
     }
   }
 
@@ -4700,7 +4807,7 @@ function saveValue(){
     hex = String($("#v-color-hex").value || $("#v-color").value).trim();
     if(!/^#[0-9a-fA-F]{6}$/.test(hex)){
       errNode.textContent = "Colour must be a 6-digit hex value, e.g. #DA291C.";
-      errNode.classList.add("show"); return;
+      errNode.classList.add("show"); return false;
     }
     hex = hex.toUpperCase();
   }
@@ -4720,8 +4827,12 @@ function saveValue(){
     if(item.mandated===undefined) item.mandated = false;
   }
 
-  $("#dlg-value").close();
-  commit(editingValue.id ? name+" updated" : name+" added");
+  var wasEditing = !!editingValue.id;
+  commit(wasEditing ? name+" updated" : name+" added");
+  /* Back to the read-only sheet so the saved value is visible straight away. */
+  populateValueForm(cfg, item.id);
+  setValueMode("view");
+  return true;
 }
 
 /* ============================================================
@@ -5037,9 +5148,38 @@ function wire(){
     if(entryMode === "edit") saveEntry(); else setEntryMode("edit");
   });
 
-  /* Value dialog */
+  /* Value dialog - the same view-then-edit sheet as an initiative. */
   $("#v-save").addEventListener("click", saveValue);
-  $("#form-value").addEventListener("submit", function(ev){ ev.preventDefault(); saveValue(); });
+  $("#form-value").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    if(valueMode === "edit") saveValue(); else setValueMode("edit");
+  });
+  $("#v-edit").addEventListener("click", function(){
+    setValueMode("edit");
+    $("#v-name").focus();
+    $("#v-name").select();
+  });
+  $("#v-cancel").addEventListener("click", cancelValueEdit);
+  $("#v-delete").addEventListener("click", function(){
+    if(editingValue.id) removeValue(editingValue.cfg, byId(state[editingValue.cfg.key], editingValue.id));
+  });
+  $("#v-remove-view").addEventListener("click", function(){
+    if(editingValue.id) removeValue(editingValue.cfg, byId(state[editingValue.cfg.key], editingValue.id));
+  });
+  /* Click any field on the admin sheet to edit it in place. */
+  $("#v-body").addEventListener("click", function(ev){
+    if(valueMode !== "view") return;
+    var host = ev.target.closest(".field, .checkline");
+    if(!host || !this.contains(host)) return;
+    /* The colour well is not typeable; put the caret in the hex box beside it. */
+    var ctrl = (host.id === "v-color-wrap")
+      ? $("#v-color-hex")
+      : host.querySelector(".control, input[type=checkbox]");
+    setValueMode("edit");
+    if(ctrl){
+      try{ ctrl.focus(); if(ctrl.select) ctrl.select(); }catch(err){}
+    }
+  });
   $("#v-color").addEventListener("input", function(){
     $("#v-color-hex").value = this.value.toUpperCase();
     renderSwatches(this.value);
@@ -5068,7 +5208,9 @@ function wire(){
   $$("[data-close]").forEach(function(b){
     b.addEventListener("click", function(){
       var dlg = b.closest("dialog");
-      if(dlg.id === "dlg-entry") requestCloseEntry(); else dlg.close();
+      if(dlg.id === "dlg-entry") requestCloseEntry();
+      else if(dlg.id === "dlg-value") requestCloseValue();
+      else dlg.close();
     });
   });
 
@@ -5092,12 +5234,15 @@ function wire(){
     });
   }
   closeOnBackdrop($("#dlg-entry"), requestCloseEntry);
-  closeOnBackdrop($("#dlg-value"), function(){ $("#dlg-value").close(); });
+  closeOnBackdrop($("#dlg-value"), requestCloseValue);
   closeOnBackdrop($("#dlg-confirm"), function(){
     confirmCb = null; confirmAltCb = null; $("#dlg-confirm").close();
   });
 
   /* Escape must not slip past the unsaved-work question either. */
+  $("#dlg-value").addEventListener("cancel", function(ev){
+    if(valueIsDirty()){ ev.preventDefault(); requestCloseValue(); }
+  });
   $("#dlg-entry").addEventListener("cancel", function(ev){
     if(entryIsDirty()){ ev.preventDefault(); requestCloseEntry(); }
   });
